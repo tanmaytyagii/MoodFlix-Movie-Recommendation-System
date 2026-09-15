@@ -64,7 +64,7 @@ const MovieDetails: React.FC = () => {
     <button
       type="button"
       onClick={goBack}
-      className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-sm font-medium text-ink-muted backdrop-blur transition-colors duration-fast hover:border-line-strong hover:text-ink"
+      className="pressable inline-flex items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-sm font-medium text-ink-muted shadow-control backdrop-blur hover:border-line-strong hover:text-ink"
     >
       <ArrowLeft size={16} aria-hidden="true" />
       Back
@@ -122,16 +122,19 @@ const MovieDetails: React.FC = () => {
         plate sits behind the content but still in front of the page background.
         Without it the plate renders behind <body> and is invisible.
       */}
-      <div className="relative isolate">
-        <div aria-hidden="true" className="absolute inset-x-0 top-0 -z-10 h-[38vh] min-h-[220px] sm:h-[52vh]">
+      <div className="relative isolate -mt-[8.25rem] pt-[8.25rem] md:-mt-[5.5rem] md:pt-[5.5rem]">
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 -z-10 h-[42vh] min-h-[260px] overflow-hidden sm:h-[58vh]">
           {movie.backdrop_path && (
             <img
               src={`${TMDB_IMAGE_BASE_URL}/w1280${movie.backdrop_path}`}
               alt=""
-              className="mask-fade-b h-full w-full object-cover object-center opacity-[0.75]"
+              className="mask-fade-b h-full w-full scale-105 object-cover object-center opacity-[0.8] blur-[1px]"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/75 to-canvas/35" />
+          <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/70 to-canvas/25" />
+          <div className="absolute inset-0 bg-gradient-to-r from-canvas/85 via-transparent to-canvas/55" />
+          {/* Matching key light, so detail pages share the hero's lighting. */}
+          <div className="ambient-light -right-20 -top-28 h-[28rem] w-[28rem] bg-accent/[0.18]" />
         </div>
 
         <div className="container-page pt-6">
@@ -139,8 +142,9 @@ const MovieDetails: React.FC = () => {
 
           <div className="mt-6 grid gap-6 sm:mt-10 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)] sm:gap-8 lg:grid-cols-[minmax(0,268px)_minmax(0,1fr)] lg:gap-12">
             {/* Poster is capped on mobile so it never eats the whole screen. */}
-            <div className="w-32 shrink-0 sm:w-auto">
-              <div className="overflow-hidden rounded-panel shadow-poster ring-1 ring-line">
+            <div className="w-32 shrink-0 [perspective:900px] sm:w-auto">
+              {/* Physical depth: the poster sits forward of the backdrop plate. */}
+              <div className="poster-edge overflow-hidden rounded-panel shadow-depth-shadow transition-depth duration-base ease-out hover:-translate-y-1.5 motion-reduce:hover:translate-y-0">
                 <MoviePoster
                   path={movie.poster_path}
                   title={movie.title}

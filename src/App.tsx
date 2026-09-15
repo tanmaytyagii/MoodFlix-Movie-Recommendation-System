@@ -14,8 +14,8 @@ function App() {
       <Router>
         <div className="flex min-h-screen flex-col bg-canvas text-ink">
           <Header />
-          {/* Offsets the fixed header: 64px bar, plus the mobile search row. */}
-          <main className="flex-grow pt-[7.25rem] md:pt-16">
+          {/* Offsets the floating header: inset + bar height, plus the mobile search row. */}
+          <main className="flex-grow pt-[8.25rem] md:pt-[5.5rem]">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/recommendations" element={<Recommendations />} />

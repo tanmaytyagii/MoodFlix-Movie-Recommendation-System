@@ -28,17 +28,17 @@ const RatingFilter: React.FC<RatingFilterProps> = ({ value, onChange }) => (
       Rating
     </span>
 
-    <div className="flex rounded-lg border border-line bg-surface p-0.5">
+    <div className="flex rounded-xl border border-cinematic-border bg-glass-surface p-0.5 backdrop-blur-md">
       {OPTIONS.map((option) => {
         const checked = value === option.value;
         return (
           <label
             key={option.value}
             className={[
-              'relative cursor-pointer select-none rounded-md px-3 py-1.5 text-meta font-medium transition-colors duration-fast',
+              'pressable relative cursor-pointer select-none rounded-md px-3 py-1.5 text-meta font-medium',
               'focus-within:ring-2 focus-within:ring-accent/70',
               checked
-                ? 'bg-accent text-accent-contrast'
+                ? 'bg-accent text-accent-contrast shadow-gold-glow'
                 : 'text-ink-muted hover:bg-surface-hover hover:text-ink',
             ].join(' ')}
           >

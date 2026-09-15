@@ -56,37 +56,61 @@ const Home: React.FC = () => {
 
   return (
     <>
-      <section className="relative isolate overflow-hidden">
-        {/* Cinematic plate: a real backdrop from what is trending right now,
-            dimmed hard so type stays legible and the image reads as atmosphere. */}
+      {/*
+        Negative margin pulls the scene up under the floating navigation, then
+        matching padding puts the content back where it was. Without this the
+        backdrop began below the header offset and left a hard horizontal seam
+        across the viewport.
+      */}
+      <section className="vignette grain relative isolate -mt-[8.25rem] overflow-hidden pt-[8.25rem] md:-mt-[5.5rem] md:pt-[5.5rem]">
+        {/*
+          Four depth layers, back to front:
+
+            1  backdrop plate  — live TMDB art, scaled past the frame
+            2  atmosphere      — gradient wash + two soft light sources
+            3  scene bridge    — dissolves the plate into the shelf below
+            4  content         — copy, and the mood console above everything
+
+          The plate is blurred a touch and heavily graded: it is set dressing,
+          so it must never compete with the type in front of it.
+        */}
         <div aria-hidden="true" className="absolute inset-0 -z-10">
           {heroBackdrop && (
             <img
               src={`${TMDB_IMAGE_BASE_URL}/w1280${heroBackdrop}`}
               alt=""
-              className="h-full w-full object-cover object-center opacity-[0.55]"
+              className="h-full w-full scale-[1.15] object-cover object-[center_28%] opacity-[0.6] blur-[2px]"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-canvas/70 via-canvas/80 to-canvas" />
-          <div className="absolute inset-0 bg-gradient-to-r from-canvas via-canvas/55 to-transparent" />
+
+          {/* Grade: dark at the edges, readable behind the copy on the left. */}
+          <div className="absolute inset-0 bg-gradient-to-r from-canvas via-canvas/78 to-canvas/25" />
+          <div className="absolute inset-0 bg-gradient-to-b from-canvas/85 via-transparent to-canvas" />
+
+          {/* Key light, warm, upper right — the single dominant source. */}
+          <div className="ambient-light -right-24 -top-32 h-[34rem] w-[34rem] bg-accent/25" />
+          {/* Fill light, cool and much weaker, lower left, for separation. */}
+          <div className="ambient-light -bottom-40 -left-32 h-[28rem] w-[28rem] bg-indigo-400/[0.07]" />
+
+          {/* Dissolve into the trending shelf: no horizontal seam. */}
+          <div className="scene-bridge absolute inset-x-0 bottom-0 h-56" />
         </div>
 
-        <div className="container-page pb-14 pt-10 sm:pb-20 sm:pt-16">
+        <div className="container-page pb-20 pt-10 sm:pb-28 sm:pt-16">
           <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:gap-14">
             <div className="max-w-2xl">
               <p className="eyebrow mb-4">Mood-first film discovery</p>
-              <h1 className="text-display text-balance text-ink">
+              <h1 className="text-display text-balance text-ink [text-shadow:0_2px_24px_rgba(0,0,0,0.6)]">
                 Watch something that
                 <span className="text-accent"> matches how you feel</span>
               </h1>
-              <p className="mt-5 max-w-lg text-lede text-ink-muted">
+              <p className="mt-5 max-w-lg text-lede text-ink-muted [text-shadow:0_1px_12px_rgba(0,0,0,0.7)]">
                 Skip the endless scroll. Tell MoodFlix what kind of evening you&rsquo;re having and
                 it will find films that fit — powered by live data from TMDB.
               </p>
+
               {/* Dividers drawn as borders rather than dot elements, so a wrap
                   never strands a separator at the end of a line. */}
-              {/* Stacked on the narrowest screens; inline with hairline
-                  dividers from `xs` up, so a wrap never strands a separator. */}
               <ul className="mt-7 flex flex-col gap-1 text-meta text-ink-faint xs:flex-row xs:flex-wrap xs:gap-y-1">
                 {['12 moods', 'Content-based similarity', 'No account needed'].map((fact, index) => (
                   <li
@@ -99,14 +123,14 @@ const Home: React.FC = () => {
               </ul>
             </div>
 
-            <div className="lg:justify-self-end lg:pt-2">
+            <div className="[perspective:1600px] lg:justify-self-end lg:pt-2">
               <SentimentForm />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="container-page pb-16 sm:pb-20" aria-labelledby="trending-heading">
+      <section className="container-page relative pb-16 sm:pb-24" aria-labelledby="trending-heading">
         <SectionHeading
           id="trending-heading"
           eyebrow="Popular now"

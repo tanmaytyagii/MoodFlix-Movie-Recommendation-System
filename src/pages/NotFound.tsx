@@ -18,7 +18,7 @@ const NotFound: React.FC = () => (
     </p>
     <Link
       to="/"
-      className="mt-8 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast transition-colors duration-fast hover:bg-accent-strong"
+      className="pressable mt-8 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast shadow-control hover:bg-accent-strong hover:shadow-card"
     >
       Back to MoodFlix
     </Link>

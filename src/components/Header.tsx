@@ -53,7 +53,7 @@ const Header: React.FC = () => {
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     [
-      'relative rounded-full px-3 py-2 text-sm font-medium transition-colors duration-fast ease-out',
+      'pressable relative rounded-full px-3 py-2 text-sm font-medium',
       isActive ? 'text-ink' : 'text-ink-muted hover:text-ink',
     ].join(' ');
 
@@ -67,15 +67,20 @@ const Header: React.FC = () => {
     ) : null;
 
   return (
-    <header
-      className={[
-        'fixed inset-x-0 top-0 z-40 transition-colors duration-base ease-out',
-        scrolled || menuOpen
-          ? 'border-b border-line bg-canvas/95 backdrop-blur-xl'
-          : 'border-b border-transparent bg-gradient-to-b from-canvas/90 to-transparent',
-      ].join(' ')}
-    >
-      <div className="container-page">
+    /*
+      Floating navigation. The bar is inset from the viewport edge and rounded,
+      so it reads as a surface hovering above the scene rather than a browser
+      chrome strip welded to the top. The outer element stays full-width and
+      transparent purely to own the fixed positioning.
+    */
+    <header className="fixed inset-x-0 top-0 z-40 pointer-events-none">
+      <div className="container-page pt-3 sm:pt-4">
+        <div
+          className={[
+            'glass glass-edge pointer-events-auto rounded-2xl px-3 transition-depth duration-base ease-out sm:px-4',
+            scrolled || menuOpen ? 'glass-nav-scrolled' : 'glass-nav',
+          ].join(' ')}
+        >
         <div className="flex h-16 items-center gap-3">
           <Link
             to="/"
@@ -152,6 +157,7 @@ const Header: React.FC = () => {
             ))}
           </ul>
         </nav>
+        </div>
       </div>
     </header>
   );
@@ -180,7 +186,7 @@ const SearchField: React.FC<SearchFieldProps> = ({ id, value, onChange }) => (
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder="Search films…"
-      className="h-10 w-full rounded-lg border border-line bg-surface-raised pl-9 pr-9 text-sm text-ink placeholder:text-ink-faint transition-colors duration-fast hover:border-line-strong focus:border-accent/60 focus:bg-surface-hover [&::-webkit-search-cancel-button]:appearance-none"
+      className="h-9 w-full rounded-xl border border-cinematic-border bg-glass-surface pl-9 pr-9 text-sm text-ink shadow-control backdrop-blur-md transition-depth duration-base ease-out placeholder:text-ink-faint hover:border-white/20 focus:border-accent/50 focus:bg-white/[0.07] focus:shadow-gold-glow [&::-webkit-search-cancel-button]:appearance-none"
     />
     {value && (
       <button

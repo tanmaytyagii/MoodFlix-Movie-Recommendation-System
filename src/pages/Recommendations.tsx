@@ -55,7 +55,7 @@ const Recommendations: React.FC = () => {
       {showMoodPanel && userSentiment && source && (
         <section
           aria-labelledby="mood-heading"
-          className="rise-in relative isolate mb-10 overflow-hidden rounded-panel border border-line bg-surface p-6 sm:mb-12 sm:p-8"
+          className="glass glass-edge rise-in relative isolate mb-10 overflow-hidden rounded-[1.5rem] p-6 sm:mb-12 sm:p-8"
         >
           {/* Mood hue as a soft wash, so the panel is tinted by the mood without
               the UI turning into a block of saturated colour. */}
@@ -67,7 +67,7 @@ const Recommendations: React.FC = () => {
 
           <div className="flex flex-wrap items-start gap-5">
             <span
-              className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl"
+              className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14),0_4px_12px_-4px_rgba(0,0,0,0.7)]"
               style={{ backgroundColor: `${hue}26`, color: hue }}
             >
               <MoodIcon mood={userSentiment.label} size={26} />
@@ -94,7 +94,7 @@ const Recommendations: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="rounded-lg border border-line-strong bg-surface-raised px-4 py-2 text-sm font-medium text-ink transition-colors duration-fast hover:border-accent/50 hover:text-accent"
+              className="pressable rounded-lg border border-line-strong bg-surface-raised px-4 py-2 text-sm font-medium text-ink shadow-control hover:border-accent/50 hover:text-accent"
             >
               Change mood
             </button>

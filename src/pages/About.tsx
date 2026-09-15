@@ -93,7 +93,7 @@ const About: React.FC = () => (
       </p>
       <Link
         to="/"
-        className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast transition-colors duration-fast hover:bg-accent-strong"
+        className="pressable inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast shadow-control hover:bg-accent-strong hover:shadow-card"
       >
         Find something to watch
         <ArrowRight size={16} aria-hidden="true" />

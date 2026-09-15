@@ -48,7 +48,7 @@ const StatusMessage: React.FC<StatusMessageProps> = ({
         <button
           type="button"
           onClick={onRetry}
-          className="mt-6 inline-flex items-center gap-2 rounded-lg border border-line-strong bg-surface-raised px-4 py-2.5 text-sm font-medium text-ink transition-colors duration-fast hover:border-accent/50 hover:bg-surface-hover hover:text-accent"
+          className="pressable mt-6 inline-flex items-center gap-2 rounded-lg border border-line-strong bg-surface-raised px-4 py-2.5 text-sm font-medium text-ink shadow-control hover:border-accent/50 hover:bg-surface-hover hover:text-accent"
         >
           <RefreshCw size={15} aria-hidden="true" />
           {retryLabel}

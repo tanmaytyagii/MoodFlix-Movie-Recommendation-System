@@ -70,6 +70,18 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+
+    /* Flatten depth entirely: a static tilt is as unwelcome as an animated one. */
+    .tilt,
+    .layer-raise,
+    .layer-raise-sm {
+      transform: none !important;
+    }
+
+    .pressable:hover,
+    .pressable:active {
+      transform: none !important;
+    }
   }
 }
 
@@ -120,7 +132,218 @@
   .rise-in {
     animation: rise-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
+
+  /* ---------------------------------------------------------------------
+   * Depth language
+   *
+   * One perspective ancestor per interactive group, children transform in
+   * that space. Only `transform`, `opacity` and `box-shadow` are animated —
+   * never layout properties — so every effect stays on the compositor.
+   * ------------------------------------------------------------------- */
+
+  /*
+   * Establishes the 3D viewing frustum for a tilting child, and owns the
+   * rotation variables.
+   *
+   * The defaults live here rather than on `.tilt` on purpose: a declaration on
+   * the tilt element itself would shadow the inherited value, so the pointer
+   * handler's writes on this host would never reach it and the card would stay
+   * at the identity matrix. The handler sets an inline style on this element,
+   * which beats this rule and inherits down to `.tilt`.
+   */
+  .scene {
+    --rx: 0deg;
+    --ry: 0deg;
+    perspective: 900px;
+  }
+
+  /* Tilt target. Flat until a fine pointer writes the variables above. */
+  .tilt {
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+    transform-style: preserve-3d;
+    transition:
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+
+  /* While tracking the cursor, follow it immediately rather than easing. */
+  .tilt[data-tilting='true'] {
+    transition: box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Lifts a child toward the viewer inside a tilted parent. */
+  .layer-raise {
+    transform: translateZ(28px);
+  }
+
+  .layer-raise-sm {
+    transform: translateZ(14px);
+  }
+
+  /* Press feedback for controls: rest, hover lift, active press. */
+  .pressable {
+    transition:
+      transform 150ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 150ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .pressable:hover {
+      transform: translateY(-1px);
+    }
+  }
+
+  .pressable:active {
+    transform: translateY(1px) scale(0.985);
+  }
+
+  /*
+   * Cinematic grain. An inline SVG turbulence rather than an image request —
+   * roughly 200 bytes, and it keeps large flat gradients from banding.
+   */
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+
+  /* ---------------------------------------------------------------------
+   * Glass surfaces
+   *
+   * Real glass needs four things, not just transparency: a tint, a blur of
+   * what is behind it, a lit top edge, and ambient falloff beneath. Dropping
+   * any one of them leaves a flat translucent rectangle.
+   * ------------------------------------------------------------------- */
+
+  .glass {
+    background-color: theme('colors.cinematic-surface');
+    border: 1px solid theme('colors.cinematic-border');
+    box-shadow: theme('boxShadow.depth-shadow');
+    -webkit-backdrop-filter: blur(28px) saturate(140%);
+    backdrop-filter: blur(28px) saturate(140%);
+  }
+
+  /*
+   * Specular edge: a hairline that is bright at the top-left and fades away,
+   * as if a single light source sits above and to one side. Drawn with a
+   * masked gradient border so it follows the panel's radius.
+   */
+  .glass-edge {
+    position: relative;
+  }
+
+  .glass-edge::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.05) 28%,
+      transparent 55%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  /* Floating navigation bar: detached from the viewport edge. */
+  .glass-nav {
+    background-color: rgba(12, 12, 15, 0.62);
+    border: 1px solid theme('colors.cinematic-border');
+    box-shadow: theme('boxShadow.nav-float');
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    backdrop-filter: blur(24px) saturate(150%);
+  }
+
+  .glass-nav-scrolled {
+    background-color: rgba(10, 10, 13, 0.88);
+  }
+
+  /* ---------------------------------------------------------------------
+   * Atmosphere
+   * ------------------------------------------------------------------- */
+
+  /*
+   * Soft light source. A heavily blurred radial with no hard edge — this is
+   * lighting, not a decorative circle, so it is always low opacity and always
+   * sits behind content.
+   */
+  .ambient-light {
+    position: absolute;
+    border-radius: 9999px;
+    pointer-events: none;
+    filter: blur(90px);
+    will-change: opacity;
+  }
+
+  /*
+   * Bridges the hero into the section beneath it, so the backdrop dissolves
+   * into the page instead of ending on a visible horizontal seam.
+   */
+  .scene-bridge {
+    background-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      theme('colors.canvas') 92%
+    );
+  }
+
+  /* ---------------------------------------------------------------------
+   * Poster depth
+   * ------------------------------------------------------------------- */
+
+  /*
+   * A poster is a physical object: a dark edge where it meets the page, and a
+   * faint lit rim along the top. Applied as insets so it never affects layout.
+   */
+  .poster-edge {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+  }
+
+  /*
+   * Specular sweep across a poster on hover. Purely decorative, sits above the
+   * artwork and below the badges, and fades in rather than animating position
+   * so it stays on the compositor.
+   */
+  .sheen {
+    background: linear-gradient(
+      115deg,
+      transparent 35%,
+      rgba(255, 255, 255, 0.10) 48%,
+      transparent 62%
+    );
+  }
+
+  /* Radial vignette that darkens the frame edges without touching the centre. */
+  .vignette::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      115% 85% at 50% 30%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.45) 100%
+    );
+  }
 }
+
 
 @keyframes rise-in {
   from {

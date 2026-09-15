@@ -46,6 +46,14 @@ export default {
           soft: 'rgba(232, 179, 62, 0.12)',
         },
 
+        /* Cinematic aliases — the named tokens the design language refers to. */
+        'cinematic-background': '#08080A',
+        'cinematic-surface': 'rgba(20, 20, 25, 0.72)',
+        'cinematic-border': 'rgba(255, 255, 255, 0.09)',
+        'glass-surface': 'rgba(255, 255, 255, 0.045)',
+        'glass-highlight': 'rgba(255, 255, 255, 0.10)',
+        'gold-accent': '#E8B33E',
+
         positive: '#4ADE80',
         caution: '#FBBF24',
         critical: '#F87171',
@@ -71,11 +79,46 @@ export default {
         panel: '1.25rem',
       },
 
+      /*
+       * Depth scale. Each step layers a tight contact shadow, a mid ambient
+       * spread and a wide soft falloff — that stack is what reads as real
+       * elevation. A single large blur just reads as fog.
+       */
       boxShadow: {
-        // Depth comes from a soft ambient spread, not a hard drop shadow.
-        card: '0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.7)',
-        lift: '0 2px 4px rgba(0,0,0,0.4), 0 20px 40px -16px rgba(0,0,0,0.85)',
-        poster: '0 24px 60px -24px rgba(0,0,0,0.95)',
+        card: '0 1px 2px rgba(0,0,0,0.45), 0 8px 24px -12px rgba(0,0,0,0.7)',
+        lift: '0 2px 4px rgba(0,0,0,0.45), 0 20px 40px -16px rgba(0,0,0,0.85)',
+        hover:
+          '0 2px 6px rgba(0,0,0,0.5), 0 12px 24px -8px rgba(0,0,0,0.6), 0 32px 64px -24px rgba(0,0,0,0.9)',
+        poster:
+          '0 4px 10px rgba(0,0,0,0.5), 0 18px 36px -12px rgba(0,0,0,0.7), 0 40px 80px -32px rgba(0,0,0,0.95)',
+        panel:
+          '0 1px 0 0 rgba(255,255,255,0.04) inset, 0 12px 28px -12px rgba(0,0,0,0.75), 0 48px 96px -48px rgba(0,0,0,0.9)',
+        // Contact shadow for a control resting on a surface.
+        control: '0 1px 2px rgba(0,0,0,0.5), 0 2px 6px -2px rgba(0,0,0,0.4)',
+
+        /*
+         * Glass stack: an inner top highlight reads as a lit edge, an inner
+         * bottom shade reads as thickness, then ambient falloff underneath.
+         * That combination is what makes a panel look like a physical slab
+         * rather than a translucent rectangle.
+         */
+        'ambient-shadow':
+          'inset 0 1px 0 0 rgba(255,255,255,0.10), inset 0 -1px 0 0 rgba(0,0,0,0.5), 0 24px 48px -24px rgba(0,0,0,0.8)',
+        'depth-shadow':
+          'inset 0 1px 0 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.5), 0 24px 48px -20px rgba(0,0,0,0.75), 0 64px 120px -60px rgba(0,0,0,0.95)',
+        'nav-float':
+          'inset 0 1px 0 0 rgba(255,255,255,0.08), 0 8px 24px -12px rgba(0,0,0,0.8), 0 2px 6px -2px rgba(0,0,0,0.5)',
+        'gold-glow': '0 0 0 1px rgba(232,179,62,0.35), 0 8px 28px -10px rgba(232,179,62,0.30)',
+      },
+
+      perspective: {
+        'perspective-card': '900px',
+        card: '900px',
+        panel: '1600px',
+      },
+
+      transitionProperty: {
+        depth: 'transform, box-shadow, border-color, background-color, opacity',
       },
 
       transitionTimingFunction: {
