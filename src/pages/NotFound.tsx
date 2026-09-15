@@ -7,15 +7,18 @@ import { Compass } from 'lucide-react';
  * serves `index.html`, so without this the router would render an empty shell.
  */
 const NotFound: React.FC = () => (
-  <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 px-4 pb-16 pt-24 text-center">
-    <Compass size={48} className="mb-4 text-yellow-400" aria-hidden="true" />
-    <h1 className="mb-2 text-4xl font-bold text-white">Page not found</h1>
-    <p className="mb-6 max-w-md text-gray-400">
+  <div className="container-page flex min-h-[60vh] flex-col items-center justify-center py-16 text-center">
+    <span aria-hidden="true" className="mb-6 grid h-14 w-14 place-items-center rounded-full border border-line bg-surface text-accent">
+      <Compass size={24} />
+    </span>
+    <p className="eyebrow mb-3">404</p>
+    <h1 className="text-title text-balance text-ink">This page rolled off the reel</h1>
+    <p className="mt-4 max-w-md text-lede text-ink-muted">
       That link doesn&rsquo;t lead anywhere in MoodFlix. It may be out of date.
     </p>
     <Link
       to="/"
-      className="rounded-md bg-blue-600 px-5 py-2.5 text-white transition-colors hover:bg-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+      className="mt-8 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast transition-colors duration-fast hover:bg-accent-strong"
     >
       Back to MoodFlix
     </Link>

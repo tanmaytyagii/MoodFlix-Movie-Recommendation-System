@@ -49,8 +49,68 @@ describe('MoviePoster', () => {
     expect(container.firstElementChild?.className).toContain('aspect-[2/3]');
   });
 
+  /**
+   * Regression: a cached image can complete before React attaches `onLoad`, so
+   * the fade-in never ran and the poster stayed invisible.
+   */
+  describe('already-cached images', () => {
+    const patch = (complete: boolean, naturalWidth: number) => {
+      const saved = {
+        complete: Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'complete'),
+        naturalWidth: Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'naturalWidth'),
+      };
+      Object.defineProperty(HTMLImageElement.prototype, 'complete', { configurable: true, get: () => complete });
+      Object.defineProperty(HTMLImageElement.prototype, 'naturalWidth', { configurable: true, get: () => naturalWidth });
+      // Restore exactly, so the patch cannot leak into any later test.
+      return () => {
+        for (const [key, value] of Object.entries(saved)) {
+          if (value) Object.defineProperty(HTMLImageElement.prototype, key, value);
+          else delete (HTMLImageElement.prototype as unknown as Record<string, unknown>)[key];
+        }
+      };
+    };
+
+    it('reveals an image that was already complete before mount', () => {
+      const restore = patch(true, 500);
+      try {
+        render(<MoviePoster path="/cached.jpg" title="Heat" />);
+        const image = screen.getByRole('img', { name: 'Poster for Heat' });
+        expect(image.className).toContain('opacity-100');
+      } finally {
+        restore();
+      }
+    });
+
+    it('falls back when a cached image completed with no pixels', () => {
+      const restore = patch(true, 0);
+      try {
+        render(<MoviePoster path="/broken.jpg" title="Heat" />);
+        expect(screen.getByRole('img', { name: 'No poster available for Heat' })).toBeDefined();
+      } finally {
+        restore();
+      }
+    });
+
+    it('restores the prototype so later tests see a normal image', () => {
+      render(<MoviePoster path="/abc.jpg" title="Heat" />);
+      expect(screen.getByRole('img', { name: 'Poster for Heat' })).toBeDefined();
+    });
+  });
+
+  it('serves a responsive srcSet so phones fetch smaller artwork', () => {
+    render(<MoviePoster path="/abc.jpg" title="Heat" size="w500" />);
+    const srcSet = screen.getByRole('img', { name: 'Poster for Heat' }).getAttribute('srcset') ?? '';
+    expect(srcSet).toContain('/w185/abc.jpg 185w');
+    expect(srcSet).toContain('/w500/abc.jpg 500w');
+  });
+
   it('lazy-loads posters below the fold', () => {
     render(<MoviePoster path="/abc.jpg" title="Heat" />);
     expect(screen.getByRole('img', { name: 'Poster for Heat' }).getAttribute('loading')).toBe('lazy');
+  });
+
+  it('eagerly loads a poster marked as priority', () => {
+    render(<MoviePoster path="/abc.jpg" title="Heat" priority />);
+    expect(screen.getByRole('img', { name: 'Poster for Heat' }).getAttribute('loading')).toBe('eager');
   });
 });

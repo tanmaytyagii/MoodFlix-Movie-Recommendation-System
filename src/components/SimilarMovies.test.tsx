@@ -65,13 +65,44 @@ describe('SimilarMovies', () => {
     expect(link.getAttribute('href')).toBe('/movie/2');
   });
 
-  it('surfaces the similarity score as a percentage match', async () => {
+  /**
+   * Cards carry a rank, not a raw similarity percentage. TF-IDF cosine over
+   * short synopses lands around 0.05-0.2, so "7% match" reads as a broken score
+   * and implies a probability the number does not carry. Order is the signal.
+   */
+  it('numbers the results by similarity rank', async () => {
     vi.mocked(recommendations.getContentBasedRecommendations).mockResolvedValue([
-      { movie: candidate(2, 'Casino Job'), similarity: 0.823 },
+      { movie: candidate(2, 'Casino Job'), similarity: 0.19 },
+      { movie: candidate(3, 'Bank Run'), similarity: 0.07 },
     ]);
 
     renderRail();
-    expect(await screen.findByText('82% match')).toBeDefined();
+
+    expect(await screen.findByText('Ranked 1 by similarity')).toBeDefined();
+    expect(screen.getByText('Ranked 2 by similarity')).toBeDefined();
+  });
+
+  it('never renders a raw similarity percentage', async () => {
+    vi.mocked(recommendations.getContentBasedRecommendations).mockResolvedValue([
+      { movie: candidate(2, 'Casino Job'), similarity: 0.07 },
+    ]);
+
+    const { container } = renderRail();
+    await screen.findByRole('link', { name: /Casino Job/ });
+    expect(container.textContent).not.toMatch(/\d+%/);
+  });
+
+  it('preserves the order the recommender returned', async () => {
+    vi.mocked(recommendations.getContentBasedRecommendations).mockResolvedValue([
+      { movie: candidate(2, 'Casino Job'), similarity: 0.19 },
+      { movie: candidate(3, 'Bank Run'), similarity: 0.07 },
+    ]);
+
+    renderRail();
+    await screen.findByRole('link', { name: /Casino Job/ });
+
+    const titles = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
+    expect(titles).toEqual(['/movie/2', '/movie/3']);
   });
 
   it('shows a loading state while ranking', () => {

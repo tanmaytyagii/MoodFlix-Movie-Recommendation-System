@@ -91,9 +91,41 @@ describe('Header navigation', () => {
     expect(toggle().getAttribute('aria-controls')).toBe(mobileMenu().id);
   });
 
-  it('labels the search input for screen readers', () => {
+  /**
+   * Two search fields render: one in the desktop rail, one on its own row for
+   * mobile. CSS shows exactly one at a given breakpoint; jsdom sees both.
+   * Search stays visible on mobile rather than hiding inside the menu, because
+   * it is a primary action in a discovery product.
+   */
+  it('labels every search input for screen readers', () => {
     renderHeader();
-    expect(screen.getByLabelText('Search movies by title')).toBeDefined();
+    const inputs = screen.getAllByLabelText('Search movies by title');
+    expect(inputs).toHaveLength(2);
+    for (const input of inputs) expect(input.getAttribute('type')).toBe('search');
+  });
+
+  it('gives each search input a unique id so its label binds correctly', () => {
+    renderHeader();
+    const ids = screen.getAllByLabelText('Search movies by title').map((input) => input.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.every(Boolean)).toBe(true);
+  });
+
+  it('offers no clear button until there is a query', () => {
+    renderHeader();
+    expect(screen.queryByRole('button', { name: 'Clear search' })).toBeNull();
+  });
+
+  it('clears the query from the search field', async () => {
+    const user = userEvent.setup();
+    renderHeader();
+    const [input] = screen.getAllByLabelText('Search movies by title');
+
+    await user.type(input, 'blade');
+    expect((input as HTMLInputElement).value).toBe('blade');
+
+    await user.click(screen.getAllByRole('button', { name: 'Clear search' })[0]);
+    expect((input as HTMLInputElement).value).toBe('');
   });
 
   it('keeps the desktop navigation reachable', () => {

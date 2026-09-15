@@ -1,34 +1,35 @@
 import React, { useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Info } from 'lucide-react';
+import { Info, SlidersHorizontal } from 'lucide-react';
 import MovieList from '../components/MovieList';
+import MoodIcon from '../components/MoodIcon';
 import { useAppContext } from '../context/useAppContext';
 import { Sentiment } from '../types';
-import { SENTIMENT_DESCRIPTIONS, SENTIMENT_EMOJIS } from '../utils/constants';
+import { SENTIMENT_COLORS, SENTIMENT_DESCRIPTIONS } from '../utils/constants';
 
 /**
  * How the mood was arrived at, in the user's words.
  *
- * The distinction matters: a transformer's softmax output and a keyword match
- * score are not the same quantity, and labelling both "confidence" would
- * overstate what the lexicon actually knows.
+ * A transformer's softmax output and a keyword match score are different
+ * quantities; labelling both "confidence" would overstate what the lexicon
+ * actually knows.
  */
-const provenance = (sentiment: Sentiment): string => {
+const provenance = (sentiment: Sentiment): { label: string; detail?: string } => {
   const percent = Math.round(sentiment.confidence * 100);
 
   switch (sentiment.source) {
     case 'manual':
-      return 'You chose this mood.';
+      return { label: 'You chose this mood' };
     case 'model':
-      return `Emotion model · ${percent}% confidence`;
+      return { label: 'Emotion model', detail: `${percent}% confidence` };
     case 'lexicon':
-      return sentiment.matchedTerms.length > 0
-        ? `Keyword match · ${percent}% mood match · matched ${sentiment.matchedTerms
-            .slice(0, 4)
-            .map((term) => `“${term}”`)
-            .join(', ')}`
-        : `Keyword match · ${percent}% mood match`;
+      return {
+        label: 'Keyword match',
+        detail:
+          sentiment.matchedTerms.length > 0
+            ? `${percent}% · matched ${sentiment.matchedTerms.slice(0, 3).map((term) => `“${term}”`).join(', ')}`
+            : `${percent}% mood match`,
+      };
   }
 };
 
@@ -45,55 +46,73 @@ const Recommendations: React.FC = () => {
     }
   }, [userSentiment, hasResults, searchQuery, navigate]);
 
+  const showMoodPanel = userSentiment && !searchQuery;
+  const hue = userSentiment ? SENTIMENT_COLORS[userSentiment.label] : undefined;
+  const source = userSentiment ? provenance(userSentiment) : null;
+
   return (
-    <div className="min-h-screen bg-gray-900 pb-16 pt-24">
-      <div className="container mx-auto px-4 py-8">
-        {userSentiment && !searchQuery && (
-          <motion.div
-            className="mx-auto mb-10 max-w-3xl rounded-xl bg-gray-800 p-6"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="mb-3 flex items-center justify-center">
-              <span aria-hidden="true" className="mr-3 text-4xl">
-                {SENTIMENT_EMOJIS[userSentiment.label]}
-              </span>
-              <h2 className="text-2xl font-bold capitalize text-white">
-                {userSentiment.label} mood
-              </h2>
-            </div>
+    <div className="container-page py-8 sm:py-12">
+      {showMoodPanel && userSentiment && source && (
+        <section
+          aria-labelledby="mood-heading"
+          className="rise-in relative isolate mb-10 overflow-hidden rounded-panel border border-line bg-surface p-6 sm:mb-12 sm:p-8"
+        >
+          {/* Mood hue as a soft wash, so the panel is tinted by the mood without
+              the UI turning into a block of saturated colour. */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 -z-10 opacity-[0.16]"
+            style={{ background: `radial-gradient(120% 140% at 0% 0%, ${hue} 0%, transparent 60%)` }}
+          />
 
-            <p className="text-center text-gray-300">
-              {SENTIMENT_DESCRIPTIONS[userSentiment.label]}
-            </p>
+          <div className="flex flex-wrap items-start gap-5">
+            <span
+              className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl"
+              style={{ backgroundColor: `${hue}26`, color: hue }}
+            >
+              <MoodIcon mood={userSentiment.label} size={26} />
+            </span>
 
-            <p className="mt-3 text-center text-sm text-gray-500">{provenance(userSentiment)}</p>
-
-            {userSentiment.isUncertain && (
-              <p className="mt-4 flex items-start gap-2 rounded-lg bg-gray-700/60 p-3 text-sm text-gray-300">
-                <Info size={16} className="mt-0.5 shrink-0 text-yellow-400" aria-hidden="true" />
-                <span>
-                  We couldn&rsquo;t read a clear mood from that. Try describing how you feel in a
-                  little more detail, or pick a mood directly.
-                </span>
+            <div className="min-w-0 flex-1">
+              <p className="eyebrow">Your mood</p>
+              <h1 id="mood-heading" className="mt-1 text-title capitalize text-ink">
+                {userSentiment.label}
+              </h1>
+              <p className="mt-2 max-w-prose text-lede text-ink-muted">
+                {SENTIMENT_DESCRIPTIONS[userSentiment.label]}
               </p>
-            )}
 
-            <div className="mt-4 flex justify-center">
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-              >
-                Change mood
-              </button>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="chip">
+                  <SlidersHorizontal size={12} aria-hidden="true" />
+                  {source.label}
+                </span>
+                {source.detail && <span className="text-meta text-ink-faint">{source.detail}</span>}
+              </div>
             </div>
-          </motion.div>
-        )}
 
-        <MovieList />
-      </div>
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="rounded-lg border border-line-strong bg-surface-raised px-4 py-2 text-sm font-medium text-ink transition-colors duration-fast hover:border-accent/50 hover:text-accent"
+            >
+              Change mood
+            </button>
+          </div>
+
+          {userSentiment.isUncertain && (
+            <p className="mt-5 flex items-start gap-2.5 rounded-card border border-line bg-surface-sunken p-3.5 text-sm text-ink-muted">
+              <Info size={15} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
+              <span>
+                We couldn&rsquo;t read a clear mood from that. Try describing how you feel in a
+                little more detail, or pick a mood directly.
+              </span>
+            </p>
+          )}
+        </section>
+      )}
+
+      <MovieList />
     </div>
   );
 };

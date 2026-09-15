@@ -1,12 +1,13 @@
-import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Filter, Loader } from 'lucide-react';
-import MovieCard from './MovieCard';
-import StatusMessage from './StatusMessage';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Movie } from '../types';
 import { useAppContext } from '../context/useAppContext';
 import { searchMovies, getTrendingMovies } from '../services/tmdbService';
 import { ApiError, toApiError } from '../services/apiClient';
+import MovieGrid from './MovieGrid';
+import MovieGridSkeleton from './MovieGridSkeleton';
+import StatusMessage from './StatusMessage';
+import SectionHeading from './SectionHeading';
+import RatingFilter from './RatingFilter';
 
 const SEARCH_DEBOUNCE_MS = 400;
 
@@ -23,10 +24,7 @@ const MovieList: React.FC = () => {
   const [trendingLoading, setTrendingLoading] = useState(false);
   const [trendingError, setTrendingError] = useState<ApiError | null>(null);
 
-  const [showFilter, setShowFilter] = useState(false);
-  const [filterRating, setFilterRating] = useState(0);
-  const filterId = useId();
-  const filterPanelId = useId();
+  const [minRating, setMinRating] = useState(0);
 
   const trimmedQuery = searchQuery.trim();
   // Keyed off the presence of a mood rather than the length of the results
@@ -79,8 +77,7 @@ const MovieList: React.FC = () => {
     }
   }, []);
 
-  // Fetch trending at most once. The previous version refetched whenever the
-  // search-results array was replaced with a new empty array.
+  // Fetch trending at most once per mount.
   const trendingRequested = useRef(false);
   useEffect(() => {
     if (mode !== 'trending' || trendingRequested.current) return;
@@ -101,34 +98,34 @@ const MovieList: React.FC = () => {
   const { movies, loading, failure } = source[mode];
 
   const filteredMovies = movies.filter(
-    (movie) => filterRating === 0 || (movie.vote_average / 10) * 5 >= filterRating,
+    (movie) => minRating === 0 || movie.vote_average >= minRating,
   );
 
   const heading =
     mode === 'search'
-      ? `Search results for "${trimmedQuery}"`
+      ? `Results for “${trimmedQuery}”`
+      : mode === 'recommendations'
+        ? 'Recommended films'
+        : 'Trending this week';
+
+  const eyebrow =
+    mode === 'search'
+      ? 'Search'
       : mode === 'recommendations' && userSentiment
-        ? `Recommended for your ${userSentiment.label} mood`
-        : 'Trending movies';
+        ? `${userSentiment.label} mood`
+        : 'Popular now';
 
   const retryHandler =
     mode === 'search' ? undefined : mode === 'recommendations' ? () => void retry() : retryTrending;
 
   const renderBody = () => {
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center py-12" role="status">
-          <Loader size={32} className="animate-spin text-yellow-500" aria-hidden="true" />
-          <span className="ml-3 text-xl text-gray-300">Loading movies…</span>
-        </div>
-      );
-    }
+    if (loading) return <MovieGridSkeleton />;
 
     if (failure) {
       return (
         <StatusMessage
           variant="error"
-          title="We couldn't load these movies"
+          title="We couldn't load these films"
           description={failure.userMessage}
           onRetry={retryHandler}
         />
@@ -140,90 +137,44 @@ const MovieList: React.FC = () => {
       return (
         <StatusMessage
           variant="empty"
-          title={filteredOut ? 'No movies match that rating' : 'No movies found'}
+          title={filteredOut ? 'Nothing above that rating' : 'No films found'}
           description={
             filteredOut
-              ? 'Lower the minimum rating to see more results.'
+              ? `None of these ${movies.length} films scored ${minRating.toFixed(1)} or higher.`
               : mode === 'search'
-                ? 'Try a different search term.'
-                : 'Try selecting a different mood.'
+                ? 'Try a different title or spelling.'
+                : 'Try a different mood to see other films.'
           }
-          onRetry={filteredOut ? () => setFilterRating(0) : undefined}
-          retryLabel="Reset filter"
+          onRetry={filteredOut ? () => setMinRating(0) : undefined}
+          retryLabel="Clear rating filter"
         />
       );
     }
 
-    return (
-      <motion.div
-        className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        {filteredMovies.map((movie) => (
-          <MovieCard key={movie.id} movie={movie} />
-        ))}
-      </motion.div>
-    );
+    return <MovieGrid movies={filteredMovies} />;
   };
 
+  const showFilter = !loading && !failure && movies.length > 0;
+
   return (
-    <div className="w-full">
-      <div className="mb-6 flex flex-col items-center justify-between sm:flex-row">
-        <div>
-          <h2 className="text-2xl font-bold text-white">{heading}</h2>
-          <p className="mt-1 text-gray-400" aria-live="polite">
-            {loading || failure
-              ? ' '
-              : `${filteredMovies.length} ${filteredMovies.length === 1 ? 'movie' : 'movies'} found`}
-          </p>
-        </div>
+    <section aria-labelledby="movie-list-heading">
+      <SectionHeading
+        id="movie-list-heading"
+        eyebrow={eyebrow}
+        title={heading}
+        action={showFilter ? <RatingFilter value={minRating} onChange={setMinRating} /> : undefined}
+      />
 
-        <div className="mt-4 sm:mt-0">
-          <button
-            type="button"
-            onClick={() => setShowFilter((open) => !open)}
-            aria-expanded={showFilter}
-            aria-controls={filterPanelId}
-            className="flex items-center rounded-lg bg-gray-700 px-4 py-2 text-white transition-colors hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-          >
-            <Filter size={16} className="mr-2" aria-hidden="true" />
-            Filters
-          </button>
-        </div>
-      </div>
+      <p className="mt-3 text-meta text-ink-faint" aria-live="polite">
+        {loading || failure
+          ? ' '
+          : `${filteredMovies.length} ${filteredMovies.length === 1 ? 'film' : 'films'}${
+              minRating > 0 ? ` rated ${minRating.toFixed(1)}+` : ''
+            }`}
+      </p>
 
-      <div id={filterPanelId} hidden={!showFilter} className="mb-6 rounded-lg bg-gray-800 p-4">
-        <label htmlFor={filterId} className="mb-3 block font-medium text-white">
-          Minimum rating
-        </label>
-        <div className="flex items-center">
-          <input
-            id={filterId}
-            type="range"
-            min="0"
-            max="5"
-            step="0.5"
-            value={filterRating}
-            onChange={(event) => setFilterRating(Number.parseFloat(event.target.value))}
-            className="w-full max-w-xs"
-          />
-          <span className="ml-3 text-white">
-            {filterRating > 0 ? `${filterRating}+ stars` : 'All ratings'}
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setFilterRating(0)}
-          className="mt-4 rounded bg-gray-700 px-3 py-1 text-sm text-white transition-colors hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-        >
-          Reset
-        </button>
-      </div>
-
-      {renderBody()}
-    </div>
+      <div className="mt-6">{renderBody()}</div>
+    </section>
   );
 };
 

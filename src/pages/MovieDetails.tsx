@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, Clock, Film, Loader, Star } from 'lucide-react';
+import { ArrowLeft, Clock, Star } from 'lucide-react';
 import { MovieDetail } from '../types';
 import { TMDB_IMAGE_BASE_URL } from '../utils/constants';
 import { getMovieDetails } from '../services/tmdbService';
@@ -13,11 +12,9 @@ import SimilarMovies from '../components/SimilarMovies';
 /**
  * Movie detail page.
  *
- * Loads from the `:id` route parameter rather than from `location.state`. The
- * previous version read only router state, so `/movie/550` showed "Movie not
- * found" on refresh, on a shared link, or in a new tab — every deep link was
- * broken. Navigation from a card still works; it now just goes through the same
- * fetch path as everything else.
+ * Loads from the `:id` route parameter rather than router state, so `/movie/550`
+ * works on refresh, from a shared link and in a new tab. Navigation from a card
+ * goes through the same fetch path.
  */
 const MovieDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,7 +33,6 @@ const MovieDetails: React.FC = () => {
       setLoading(false);
       return;
     }
-
     setLoading(true);
     setError(null);
     try {
@@ -53,33 +49,42 @@ const MovieDetails: React.FC = () => {
     void load();
   }, [load]);
 
-  // `navigate(-1)` lands outside the app when the page was opened directly, so
-  // fall back to the home route when there is no in-app history to return to.
+  // Return to the top on a new film, otherwise deep links land mid-page.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [movieId]);
+
+  // `navigate(-1)` leaves the app when the page was opened directly.
   const goBack = () => {
     if (window.history.length > 1) navigate(-1);
     else navigate('/');
   };
 
   const backButton = (
-    <motion.button
+    <button
       type="button"
       onClick={goBack}
-      className="mb-6 inline-flex items-center rounded-md bg-gray-800 px-4 py-2 text-white transition-colors hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
+      className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-sm font-medium text-ink-muted backdrop-blur transition-colors duration-fast hover:border-line-strong hover:text-ink"
     >
-      <ArrowLeft size={20} className="mr-2" aria-hidden="true" />
-      Back to movies
-    </motion.button>
+      <ArrowLeft size={16} aria-hidden="true" />
+      Back
+    </button>
   );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 pb-16 pt-24">
-        <div className="container mx-auto flex items-center justify-center px-4 py-24" role="status">
-          <Loader size={32} className="animate-spin text-yellow-500" aria-hidden="true" />
-          <span className="ml-3 text-xl text-gray-300">Loading movie…</span>
+      <div className="container-page py-10" role="status" aria-label="Loading film">
+        <div className="skeleton mb-8 h-9 w-24 rounded-lg" />
+        <div className="grid gap-8 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)] lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
+          <div className="skeleton aspect-[2/3] w-full rounded-panel" />
+          <div className="space-y-4">
+            <div className="skeleton h-10 w-3/4 rounded" />
+            <div className="skeleton h-4 w-1/3 rounded" />
+            <div className="skeleton h-8 w-2/3 rounded-full" />
+            <div className="skeleton h-28 w-full rounded-card" />
+          </div>
         </div>
+        <span className="sr-only">Loading film</span>
       </div>
     );
   }
@@ -87,109 +92,109 @@ const MovieDetails: React.FC = () => {
   if (error || !movie) {
     const notFound = error?.kind === 'not_found';
     return (
-      <div className="min-h-screen bg-gray-900 pb-16 pt-24">
-        <div className="container mx-auto px-4">
-          {backButton}
-          <StatusMessage
-            variant={notFound ? 'empty' : 'error'}
-            title={notFound ? 'Movie not found' : "We couldn't load this movie"}
-            description={
-              notFound
-                ? "That movie doesn't exist on TMDB, or the link is out of date."
-                : (error?.userMessage ?? 'Please try again.')
-            }
-            onRetry={notFound ? undefined : () => void load()}
-          />
-        </div>
+      <div className="container-page py-10">
+        {backButton}
+        <StatusMessage
+          variant={notFound ? 'empty' : 'error'}
+          title={notFound ? 'Film not found' : "We couldn't load this film"}
+          description={
+            notFound
+              ? "That film doesn't exist on TMDB, or the link is out of date."
+              : (error?.userMessage ?? 'Please try again.')
+          }
+          onRetry={notFound ? undefined : () => void load()}
+        />
       </div>
     );
   }
 
   const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : null;
-  const rating = Number.isFinite(movie.vote_average) ? (movie.vote_average / 10) * 5 : 0;
+  const rating = Number.isFinite(movie.vote_average) ? movie.vote_average : 0;
   const genres = movie.genres?.map((genre) => genre.name) ?? [];
 
   return (
-    <div className="relative min-h-screen bg-gray-900 pb-16 pt-24">
-      {movie.backdrop_path && (
-        <div
-          aria-hidden="true"
-          className="absolute left-0 top-0 z-0 h-[60vh] w-full opacity-20"
-          style={{
-            backgroundImage: `url(${TMDB_IMAGE_BASE_URL}/original${movie.backdrop_path})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
-          }}
-        />
-      )}
+    <article>
+      {/*
+        Cinematic plate. Sized in vh so it scales with the viewport, masked at
+        the bottom so the image dissolves into the page rather than stopping.
 
-      <div className="container relative z-10 mx-auto px-4">
-        {backButton}
-
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <motion.div
-            className="md:col-span-1"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <MoviePoster
-              path={movie.poster_path}
-              title={movie.title}
-              size="w780"
-              className="rounded-lg shadow-xl"
+        `isolate` is load-bearing: it creates a stacking context so the `-z-10`
+        plate sits behind the content but still in front of the page background.
+        Without it the plate renders behind <body> and is invisible.
+      */}
+      <div className="relative isolate">
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 -z-10 h-[38vh] min-h-[220px] sm:h-[52vh]">
+          {movie.backdrop_path && (
+            <img
+              src={`${TMDB_IMAGE_BASE_URL}/w1280${movie.backdrop_path}`}
+              alt=""
+              className="mask-fade-b h-full w-full object-cover object-center opacity-[0.75]"
             />
-          </motion.div>
-
-          <motion.div
-            className="md:col-span-2"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h1 className="mb-2 text-4xl font-bold text-white">{movie.title}</h1>
-            {movie.tagline && <p className="mb-4 text-lg italic text-gray-400">{movie.tagline}</p>}
-
-            <div className="mb-6 flex flex-wrap gap-3">
-              {releaseYear && (
-                <span className="flex items-center rounded-full bg-gray-800 px-3 py-1">
-                  <Calendar size={16} className="mr-2 text-yellow-500" aria-hidden="true" />
-                  <span className="text-gray-300">{releaseYear}</span>
-                </span>
-              )}
-              {rating > 0 && (
-                <span className="flex items-center rounded-full bg-gray-800 px-3 py-1">
-                  <Star size={16} className="mr-2 text-yellow-500" aria-hidden="true" />
-                  <span className="text-gray-300">{rating.toFixed(1)} / 5</span>
-                </span>
-              )}
-              {movie.runtime ? (
-                <span className="flex items-center rounded-full bg-gray-800 px-3 py-1">
-                  <Clock size={16} className="mr-2 text-yellow-500" aria-hidden="true" />
-                  <span className="text-gray-300">{movie.runtime} min</span>
-                </span>
-              ) : null}
-              {genres.length > 0 && (
-                <span className="flex items-center rounded-full bg-gray-800 px-3 py-1">
-                  <Film size={16} className="mr-2 text-yellow-500" aria-hidden="true" />
-                  <span className="text-gray-300">{genres.join(', ')}</span>
-                </span>
-              )}
-            </div>
-
-            <div className="rounded-lg bg-gray-800 p-6">
-              <h2 className="mb-3 text-xl font-semibold text-white">Overview</h2>
-              <p className="leading-relaxed text-gray-300">
-                {movie.overview || 'No overview is available for this title.'}
-              </p>
-            </div>
-          </motion.div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/75 to-canvas/35" />
         </div>
 
+        <div className="container-page pt-6">
+          {backButton}
+
+          <div className="mt-6 grid gap-6 sm:mt-10 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)] sm:gap-8 lg:grid-cols-[minmax(0,268px)_minmax(0,1fr)] lg:gap-12">
+            {/* Poster is capped on mobile so it never eats the whole screen. */}
+            <div className="w-32 shrink-0 sm:w-auto">
+              <div className="overflow-hidden rounded-panel shadow-poster ring-1 ring-line">
+                <MoviePoster
+                  path={movie.poster_path}
+                  title={movie.title}
+                  size="w500"
+                  sizes="(min-width: 1024px) 268px, (min-width: 640px) 180px, 128px"
+                  priority
+                />
+              </div>
+            </div>
+
+            <div className="min-w-0 max-w-prose">
+              <h1 className="text-title text-balance text-ink">{movie.title}</h1>
+              {movie.tagline && (
+                <p className="mt-2 text-lede italic text-ink-faint">{movie.tagline}</p>
+              )}
+
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                {rating > 0 && (
+                  <span className="chip border-accent/25 bg-accent-soft text-accent">
+                    <Star size={12} className="fill-accent" aria-hidden="true" />
+                    <span className="font-semibold">{rating.toFixed(1)}</span>
+                    <span className="text-accent/60">/ 10</span>
+                  </span>
+                )}
+                {releaseYear && <span className="chip tabular-nums">{releaseYear}</span>}
+                {movie.runtime ? (
+                  <span className="chip">
+                    <Clock size={12} aria-hidden="true" />
+                    {movie.runtime} min
+                  </span>
+                ) : null}
+                {genres.map((genre) => (
+                  <span key={genre} className="chip">
+                    {genre}
+                  </span>
+                ))}
+              </div>
+
+              {/* Editorial, not a boxed widget — the synopsis is the content. */}
+              <div className="mt-7">
+                <h2 className="eyebrow mb-2">Overview</h2>
+                <p className="text-lede leading-relaxed text-ink-muted">
+                  {movie.overview || 'No overview is available for this title.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container-page pb-16 sm:pb-24">
         <SimilarMovies movie={movie} />
       </div>
-    </div>
+    </article>
   );
 };
 

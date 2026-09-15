@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, RefreshCw, SearchX } from 'lucide-react';
+import { RefreshCw, SearchX, WifiOff } from 'lucide-react';
 
 interface StatusMessageProps {
   variant: 'error' | 'empty';
@@ -12,10 +12,9 @@ interface StatusMessageProps {
 /**
  * Shared empty/error panel.
  *
- * Empty and error are deliberately different components visually and
- * semantically: "no movies matched" is a normal outcome, "we could not reach the
- * API" is a failure the user can retry. The old code rendered both as the same
- * "No movies found" text.
+ * Empty and error stay visually and semantically distinct: "nothing matched" is
+ * a normal outcome, "we could not reach the API" is a failure worth retrying.
+ * Copy is passed in by the caller and is never softened into a false success.
  */
 const StatusMessage: React.FC<StatusMessageProps> = ({
   variant,
@@ -25,23 +24,33 @@ const StatusMessage: React.FC<StatusMessageProps> = ({
   retryLabel = 'Try again',
 }) => {
   const isError = variant === 'error';
-  const Icon = isError ? AlertCircle : SearchX;
+  const Icon = isError ? WifiOff : SearchX;
 
   return (
     <div
-      className="mx-auto flex max-w-md flex-col items-center gap-3 py-12 text-center"
+      className="mx-auto flex max-w-md flex-col items-center px-4 py-16 text-center sm:py-24"
       role={isError ? 'alert' : 'status'}
     >
-      <Icon size={36} className={isError ? 'text-red-400' : 'text-gray-500'} aria-hidden="true" />
-      <h3 className="text-xl font-semibold text-gray-200">{title}</h3>
-      {description && <p className="text-gray-400">{description}</p>}
+      <span
+        aria-hidden="true"
+        className={[
+          'mb-5 grid h-14 w-14 place-items-center rounded-full border',
+          isError ? 'border-critical/25 bg-critical/10 text-critical' : 'border-line bg-surface text-ink-faint',
+        ].join(' ')}
+      >
+        <Icon size={22} />
+      </span>
+
+      <h3 className="text-xl font-semibold tracking-tight text-ink">{title}</h3>
+      {description && <p className="mt-2 text-sm leading-relaxed text-ink-muted">{description}</p>}
+
       {onRetry && (
         <button
           type="button"
           onClick={onRetry}
-          className="mt-2 inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+          className="mt-6 inline-flex items-center gap-2 rounded-lg border border-line-strong bg-surface-raised px-4 py-2.5 text-sm font-medium text-ink transition-colors duration-fast hover:border-accent/50 hover:bg-surface-hover hover:text-accent"
         >
-          <RefreshCw size={16} aria-hidden="true" />
+          <RefreshCw size={15} aria-hidden="true" />
           {retryLabel}
         </button>
       )}

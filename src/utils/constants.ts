@@ -87,21 +87,24 @@ export const SENTIMENT_EMOJIS: Record<SentimentLabel, string> = {
   neutral: '😐',
 };
 
-/** Tailwind background classes for each mood button. */
+/**
+ * A single hue per mood, used as a small indicator dot and a low-opacity tint —
+ * never as a full-bleed button fill, which made the picker read as a toy.
+ */
 export const SENTIMENT_COLORS: Record<SentimentLabel, string> = {
-  happy: 'bg-green-500',
-  sad: 'bg-blue-500',
-  angry: 'bg-red-500',
-  excited: 'bg-yellow-500',
-  relaxed: 'bg-teal-500',
-  romantic: 'bg-pink-500',
-  adventurous: 'bg-orange-500',
-  mysterious: 'bg-indigo-500',
-  fearful: 'bg-purple-500',
-  nostalgic: 'bg-amber-600',
-  thoughtful: 'bg-cyan-600',
-  melancholic: 'bg-slate-500',
-  neutral: 'bg-gray-500',
+  happy: '#F5C451',
+  sad: '#6C9BD8',
+  angry: '#E2685F',
+  excited: '#F0964A',
+  relaxed: '#5FBFA8',
+  romantic: '#E084A8',
+  adventurous: '#D9A05B',
+  mysterious: '#8E86D6',
+  fearful: '#A374C6',
+  nostalgic: '#C79A6B',
+  thoughtful: '#6FAFC4',
+  melancholic: '#8B93A6',
+  neutral: '#8A8A95',
 };
 
 /** Every mood a user can pick manually, in display order. */

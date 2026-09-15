@@ -12,9 +12,10 @@ function App() {
   return (
     <AppProvider>
       <Router>
-        <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+        <div className="flex min-h-screen flex-col bg-canvas text-ink">
           <Header />
-          <main className="flex-grow">
+          {/* Offsets the fixed header: 64px bar, plus the mobile search row. */}
+          <main className="flex-grow pt-[7.25rem] md:pt-16">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/recommendations" element={<Recommendations />} />
