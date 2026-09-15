@@ -27,8 +27,8 @@ const Home: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.8 }}
           >
-            Our advanced sentiment analysis understands how you feel and recommends 
-            the perfect movies to match your emotional state.
+            Describe how you&rsquo;re feeling in your own words. MoodFlix reads the mood
+            behind it and finds films that fit.
           </motion.p>
         </motion.div>
         
@@ -58,16 +58,16 @@ const Home: React.FC = () => {
             <div className="h-16 w-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Sparkles size={32} className="text-white" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Sentiment Analysis</h3>
-            <p className="text-gray-400">Our AI analyzes your mood and emotional state to find the perfect match.</p>
+            <h3 className="text-xl font-bold text-white mb-2">Mood Detection</h3>
+            <p className="text-gray-400">An emotion model reads your description and maps it to one of twelve moods.</p>
           </div>
           
           <div className="bg-gray-800 p-6 rounded-xl text-center">
             <div className="h-16 w-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <ThumbsUp size={32} className="text-white" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Discover New Favorites</h3>
-            <p className="text-gray-400">Explore a diverse range of films from thousands of titles across all genres.</p>
+            <h3 className="text-xl font-bold text-white mb-2">Find Similar Films</h3>
+            <p className="text-gray-400">Every film page ranks related titles by TF-IDF similarity on its metadata.</p>
           </div>
         </motion.div>
       </div>

@@ -1,38 +1,21 @@
 <div align="center">
 
-
-<br />
-
 # 🎬 MoodFlix
 
-### Sentiment-Based Movie Recommendation System
+### Describe how you feel. Get films that match.
 
-**Type how you're feeling. Get movies that match your mood — powered by NLP and machine learning.**
-
-<br />
-
-![React](https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![ML](https://img.shields.io/badge/ML-LogReg_|_LSTM-8E44AD?style=for-the-badge&logo=scikitlearn&logoColor=white)
-![TMDB](https://img.shields.io/badge/API-TMDB-01B4E4?style=for-the-badge&logo=themoviedatabase&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)
+MoodFlix reads the mood behind a sentence and turns it into film recommendations —
+no genre dropdowns, no star ratings, no account.
 
 <br />
 
-![Last Commit](https://img.shields.io/github/last-commit/tanmaytyagii/MoodFlix-Movie-Recommendation-System?style=flat-square&color=orange)
-![Stars](https://img.shields.io/github/stars/tanmaytyagii/MoodFlix-Movie-Recommendation-System?style=flat-square&color=yellow)
-![Forks](https://img.shields.io/github/forks/tanmaytyagii/MoodFlix-Movie-Recommendation-System?style=flat-square&color=blue)
-![Visitors](https://visitor-badge.laobi.icu/badge?page_id=tanmaytyagii.MoodFlix-Movie-Recommendation-System)
+[![CI](https://github.com/tanmaytyagii/MoodFlix-Movie-Recommendation-System/actions/workflows/ci.yml/badge.svg)](https://github.com/tanmaytyagii/MoodFlix-Movie-Recommendation-System/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E.svg)](LICENSE)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)
 
-<br />
-
-[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-mood--flix.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://mood-flix-movie-recommendation-syst.vercel.app)
-
-<br />
-
-[How It Works](#-how-it-works) &nbsp;·&nbsp; [Tech Stack](#-tech-stack) &nbsp;·&nbsp; [Setup](#-installation--setup) &nbsp;·&nbsp; [Model Performance](#-model-performance) &nbsp;·&nbsp; [Author](#-author)
+[**Live demo →**](https://mood-flix-movie-recommendation-syst.vercel.app)
 
 </div>
 
@@ -40,300 +23,380 @@
 
 ## Overview
 
-MoodFlix recommends movies based on how you're feeling right now — not what genre you pick from a dropdown. You type a sentence, the NLP pipeline reads the sentiment, maps it to relevant movie themes, and pulls real results from TMDB.
+Type *"had a rough week, could use a good laugh"* and MoodFlix works out that you want
+a comedy. Type *"melancholy and wistful"* and it gives you quiet, aching drama instead
+of lumping both under "sad".
 
-The project is fully deployed and uses two ML models (Logistic Regression and LSTM) to classify sentiment, allowing a direct comparison between a fast interpretable baseline and a deep learning approach.
+Two independent recommendation paths sit behind that:
 
----
-
-## ✨ Features
-
-| | Feature | Description |
+| | What it answers | How |
 |---|---|---|
-| 🧠 | **Mood-Aware NLP** | Classifies natural language input into sentiment and emotion labels |
-| 🎭 | **Dual ML Models** | Logistic Regression for speed, LSTM for contextual depth |
-| 🎬 | **TMDB Integration** | Live movie data — posters, ratings, overviews, release info |
-| 🎯 | **Emotion–Genre Mapping** | Translates detected mood to relevant TMDB genres automatically |
-| 📱 | **Responsive UI** | Mobile-first React interface, clean and fast |
-| 🌐 | **REST API Backend** | Python NLP pipeline exposed as consumable API endpoints |
+| **Mood-based discovery** | *"What should I watch given how I feel?"* | Emotion classification → curated mood-to-genre map → TMDB discovery |
+| **Content-based similarity** | *"What else is like this film?"* | TF-IDF over overview, genres and keywords → cosine similarity ranking |
+
+They are deliberately separate. Mood discovery compares *you* to a genre mapping;
+"More like this" compares *films* to each other.
 
 ---
 
-## 🛠 Tech Stack
+## Features
 
-### Frontend
-
-| Technology | Role |
-|---|---|
-| React 18 + TypeScript | UI framework with full type safety |
-| Tailwind CSS | Utility-first styling |
-| React Router v6 | Client-side routing |
-| Axios | HTTP client for API calls |
-
-### Backend & ML
-
-| Technology | Role |
-|---|---|
-| Python 3.10+ | Core backend language |
-| NLTK / spaCy | Text preprocessing and tokenization |
-| Scikit-learn | Logistic Regression classifier |
-| TensorFlow / Keras | LSTM model training and inference |
-| Flask / FastAPI | REST API server |
-| Pandas / NumPy | Data handling and feature engineering |
-| TMDB API v3 | Movie database and metadata source |
+- **Twelve-mood taxonomy** — happy, sad, angry, excited, relaxed, romantic, adventurous,
+  mysterious, fearful, nostalgic, thoughtful, melancholic
+- **Free-text mood input** with negation handling — *"I'm not happy"* does not read as happy
+- **Hosted emotion model** with an offline fallback, so the app works either way
+- **Transparent classification** — the UI says whether a model or the keyword engine decided,
+  and which words it matched
+- **Content-based "More like this"** ranked by TF-IDF cosine similarity, with a % match
+- **Shareable deep links** — `/movie/550` works on refresh, in a new tab, and from a shared link
+- **Server-side TMDB proxy** — no API credential in the client bundle
+- **Real error states** — an outage, an empty result and a rate limit are three different screens
+- **Responsive and keyboard-accessible**, including a working mobile menu
 
 ---
 
-## 🏗 System Architecture
+## How it works
+
+### Mood → films
 
 ```mermaid
-flowchart TD
-    A([👤 User]) --> B[💬 Free-form Text Input]
-    B --> C{🧹 NLP Preprocessing}
-    C --> D[Tokenization]
-    C --> E[Stop Word Removal]
-    C --> F[Lemmatization]
-    D & E & F --> G{🤖 Model Selection}
-    G --> H[📈 Logistic Regression\nFast baseline inference]
-    G --> I[🔬 LSTM Network\nSequential context analysis]
-    H & I --> J[🎭 Sentiment + Emotion Label\npositive · negative · neutral\nhappy · sad · angry · calm · anxious]
-    J --> K[🎯 Emotion → Genre Mapping]
-    K --> L[🌐 TMDB API Query]
-    L --> M[📦 Filter · Rank · Sort]
-    M --> N([🎬 Movie Recommendations])
-
-    style A fill:#4F46E5,color:#fff,stroke:none
-    style N fill:#059669,color:#fff,stroke:none
-    style J fill:#D97706,color:#fff,stroke:none
-    style K fill:#7C3AED,color:#fff,stroke:none
+flowchart LR
+    A([Free-text mood]) --> B{Emotion model<br/>configured?}
+    B -->|Yes, confident| C[DistilRoBERTa<br/>7-way emotion]
+    B -->|No / unconfident / neutral| D[Lexicon engine<br/>negation + phrases]
+    C --> E[One of 12 moods]
+    D --> E
+    E --> F[Mood → TMDB genre map]
+    F --> G[/api/tmdb → TMDB discover/]
+    G --> H([Ranked recommendations])
 ```
 
-**Emotion → Genre mapping used by the recommendation engine:**
+The lexicon engine is not a fallback of last resort — it covers moods the model has no
+label for at all (`nostalgic`, `mysterious`, `thoughtful`, `melancholic`), so a confident
+`neutral` from the model defers to it.
+
+### Film → similar films
+
+```mermaid
+flowchart LR
+    A([A film]) --> B[Candidate pool:<br/>TMDB similar + recommendations + genre]
+    B --> C[Document per film:<br/>title + overview + genres + keywords]
+    C --> D[TF-IDF vectors<br/>L2-normalised]
+    D --> E[Cosine similarity<br/>vs. the reference film]
+    E --> F([Ranked 'More like this'])
+```
+
+### Mood → genre mapping
+
+Editorial curation, not learned weights:
 
 ```
-happy    →  Comedy, Music          (TMDB genre IDs: 35, 10402)
-sad      →  Drama, Romance         (TMDB genre IDs: 18, 10749)
-angry    →  Action, Thriller       (TMDB genre IDs: 28, 53)
-anxious  →  Horror, Mystery        (TMDB genre IDs: 27, 9648)
-calm     →  Documentary, History   (TMDB genre IDs: 99, 36)
-excited  →  Adventure, Sci-Fi      (TMDB genre IDs: 12, 878)
+happy        →  Comedy, Family, Animation, Music
+sad          →  Drama, Romance
+angry        →  Action, Crime, Thriller
+excited      →  Action, Adventure, Science Fiction
+relaxed      →  Documentary, Animation, Family
+romantic     →  Romance, Drama, Comedy
+adventurous  →  Adventure, Fantasy, Western
+mysterious   →  Mystery, Thriller, Crime
+fearful      →  Horror, Thriller, Mystery
+nostalgic    →  Family, Music, History
+thoughtful   →  Drama, Documentary, History
+melancholic  →  Drama, Romance, Music
+neutral      →  (no mapping — shows trending instead of guessing)
 ```
 
 ---
 
-## 📁 Project Structure
+## Screenshots
+
+<!--
+  No screenshots are committed yet — placeholders are intentional rather than
+  fabricated. Capture the four views below, save them to docs/screenshots/, and
+  uncomment the matching line. See docs/screenshots/README.md.
+-->
+
+| View | |
+|---|---|
+| **Home** — mood input | <!-- ![Home](docs/screenshots/home.png) --> _screenshot pending_ |
+| **Recommendations** — results with detected-mood panel | <!-- ![Recommendations](docs/screenshots/recommendations.png) --> _screenshot pending_ |
+| **Movie details** — metadata and "More like this" | <!-- ![Movie details](docs/screenshots/movie-details.png) --> _screenshot pending_ |
+| **Mobile** — navigation menu | <!-- ![Mobile](docs/screenshots/mobile.png) --> _screenshot pending_ |
+
+---
+
+## Machine learning — what is and isn't here
+
+Being precise about this, because it is easy to overstate.
+
+**What ships:**
+
+- A **pretrained** emotion classifier, [`j-hartmann/emotion-english-distilroberta-base`](https://huggingface.co/j-hartmann/emotion-english-distilroberta-base),
+  consumed through the Hugging Face Inference API. DistilRoBERTa fine-tuned for 7-way
+  emotion classification. MoodFlix maps its labels onto its own mood taxonomy.
+- A **rule-based lexicon engine** — a curated vocabulary with negation scoping, phrase
+  matching, intensifiers and deterministic tie-breaking. Transparent and instant, but a
+  heuristic, and labelled as one in the UI.
+
+**What does not ship:** no model trained by this project, and therefore **no accuracy,
+precision, recall, F1 or confusion matrix is claimed anywhere in this repository.**
+
+Publishing metrics would require a labelled emotion dataset and a proper train/validation/test
+split. The dataset in `notebooks/data/` is IMDb *metadata* — summaries, writers, directors,
+genres — with no sentiment or emotion labels to train against. Training a MoodFlix-specific
+classifier is on the roadmap below; until it exists and has been evaluated, there are no
+numbers to report.
+
+### Confidence, honestly
+
+The two engines report different quantities, so the UI labels them differently:
+
+| Source | Shown as | What it means |
+|---|---|---|
+| Emotion model | `Emotion model · 87% confidence` | The model's softmax probability |
+| Lexicon | `Keyword match · 67% mood match · matched "rough week"` | Dominant mood's share of matched weight, damped by evidence volume |
+| Manual pick | `You chose this mood.` | No inference involved |
+
+Below a confidence threshold, MoodFlix says the mood was unclear instead of guessing quietly.
+
+### `notebooks/`
+
+`ProjectRecommendation.ipynb` is the exploratory TF-IDF pipeline over IMDb metadata that
+informed the similarity approach. It is **data preparation research** — it trains no model.
+See [`notebooks/README.md`](notebooks/README.md). Nothing in `src/` imports from it; the
+technique was reimplemented in TypeScript so the browser never downloads the 2.6 MB dataset.
+
+---
+
+## Recommendation system
+
+`src/lib/tfidf.ts` is a dependency-free TF-IDF implementation:
+
+- **Tokenisation** — lowercase, strip non-letters, drop stop words plus film-blurb filler
+  (`movie`, `story`, `young`, `man` — words in a large share of TMDB overviews), conservative stemming
+- **TF** — term count ÷ document length
+- **IDF** — smoothed, `ln((1 + N) / (1 + df)) + 1`, so a term in every document still gets positive weight
+- **Vectors** — L2-normalised, so cosine similarity is a dot product
+- **Ranking** — descending similarity, ties broken by TMDB id so results never drift between runs
+
+Genres are weighted double in each document, so sharing a genre counts for more than sharing
+an incidental synopsis word. Candidates below a similarity floor are dropped rather than padded in.
+
+---
+
+## Security
+
+**The TMDB credential is never sent to the browser.** All TMDB traffic goes through a
+serverless proxy:
+
+```
+Browser  →  /api/tmdb?path=/discover/movie  →  TMDB
+            (holds TMDB_TOKEN server-side)
+```
+
+- The token lives in `process.env.TMDB_TOKEN` and is read only inside `api/`. It is
+  deliberately **not** `VITE_`-prefixed — Vite inlines any `VITE_*` variable into the
+  client bundle, which would put the secret straight back into shipped JavaScript.
+- `path` is validated against an **allowlist** of anchored patterns, so it cannot be used
+  to point the authenticated proxy at another host, at TMDB write endpoints, or through
+  path traversal. Query parameters are allowlisted too.
+- Upstream errors are translated, never passed through — TMDB error bodies and outbound
+  request details (including the `Authorization` header) never reach the client.
+- Mood text is sent by **POST**, so it does not land in server access logs or CDN cache keys.
+
+There are 30 tests in `api/_tmdb.test.ts` covering exactly these properties.
+
+### ⚠️ Historical credential exposure
+
+An earlier commit hardcoded a TMDB API key and read token in `src/utils/constants.ts`.
+Removing them from the working tree **does not remove them from Git history** — anyone
+with a clone can still read them.
+
+**That credential must be treated as compromised and revoked at
+[TMDB → Settings → API](https://www.themoviedb.org/settings/api).** Rotating the token
+is the fix; rewriting history is optional cleanup and, on a public repo that may already
+have been cloned or forked, is not a substitute for revocation.
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| UI | React 18, TypeScript 5, Tailwind CSS 3, Framer Motion, Lucide icons |
+| Routing | React Router 6 |
+| Build | Vite 5 |
+| Backend | Vercel serverless functions (`api/`), Node 20 |
+| Data | TMDB API v3 |
+| ML | Hugging Face Inference API — DistilRoBERTa emotion classifier |
+| Testing | Vitest, React Testing Library, jsdom |
+| CI | GitHub Actions |
+
+---
+
+## Project structure
 
 ```
 MoodFlix-Movie-Recommendation-System/
-│
-├── client/                          # React + TypeScript frontend
-│   ├── public/
-│   └── src/
-│       ├── components/              # MovieCard, MoodInput, Navbar, etc.
-│       ├── pages/                   # Home, Recommendations, About
-│       ├── services/api.ts          # Axios API calls
-│       ├── types/index.ts           # Shared TypeScript interfaces
-│       ├── App.tsx
-│       └── main.tsx
-│   ├── tailwind.config.js
-│   ├── tsconfig.json
-│   └── package.json
-│
-├── server/                          # Python NLP backend
-│   ├── models/                      # logistic_model.pkl, lstm_model.h5
-│   ├── nlp/                         # preprocessor.py, sentiment_analyzer.py
-│   ├── recommender/                 # genre_mapper.py, tmdb_client.py
-│   ├── notebooks/                   # Training notebooks (LR + LSTM)
-│   ├── app.py                       # API entry point
-│   └── requirements.txt
-│
-├── assets/                          # Banner and README assets
+├── api/                        # Vercel serverless functions
+│   ├── _shared.ts              #   transport adapter shared by both handlers
+│   ├── _tmdb.test.ts           #   underscore = not deployed as a route
+│   ├── tmdb.ts                 #   TMDB proxy — holds the credential, allowlists paths
+│   └── emotion.ts              #   Hugging Face emotion-model proxy
+├── src/
+│   ├── components/             # MovieCard, MoviePoster, Header, SimilarMovies, …
+│   ├── context/                # AppProvider + useAppContext hook
+│   ├── lib/tfidf.ts            # TF-IDF + cosine similarity
+│   ├── pages/                  # Home, Recommendations, MovieDetails, About, NotFound
+│   ├── services/
+│   │   ├── apiClient.ts        #   shared HTTP client + ApiError taxonomy
+│   │   ├── moodLexicon.ts      #   curated mood vocabulary
+│   │   ├── sentimentService.ts #   lexicon engine (negation, phrases, confidence)
+│   │   ├── moodService.ts      #   model-first classifier with lexicon fallback
+│   │   ├── tmdbService.ts      #   TMDB access through the proxy
+│   │   └── recommendationService.ts  # content-based "More like this"
+│   ├── types/                  # shared interfaces
+│   └── utils/constants.ts      # genre maps, mood tables
+├── notebooks/                  # exploratory TF-IDF research (not imported by the app)
+├── docs/screenshots/           # drop real screenshots here
+├── .github/workflows/ci.yml
 ├── .env.example
-├── .gitignore
-├── LICENSE
-└── README.md
+├── .vercelignore               # keeps tests and notebooks out of the deployment
+└── vercel.json                 # SPA rewrites, excluding /api
 ```
 
 ---
 
-## 🚀 Installation & Setup
+## Local development
 
-### Prerequisites
-
-- Node.js ≥ 18.x
-- Python ≥ 3.10
-- A TMDB API key — [register here for free](https://www.themoviedb.org/settings/api)
-
-### 1. Clone the repo
+**Prerequisites:** Node.js ≥ 18, and a free [TMDB v4 Read Access Token](https://www.themoviedb.org/settings/api).
 
 ```bash
 git clone https://github.com/tanmaytyagii/MoodFlix-Movie-Recommendation-System.git
 cd MoodFlix-Movie-Recommendation-System
-```
 
-### 2. Backend
-
-```bash
-cd server
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-cp ../.env.example .env         # Fill in your TMDB_API_KEY
-python app.py
-```
-
-> Backend runs at `http://localhost:5000`
-
-### 3. Frontend
-
-```bash
-cd ../client
 npm install
+cp .env.example .env     # then add your TMDB_TOKEN
 npm run dev
 ```
 
-> Frontend runs at `http://localhost:5173`
+The app runs at **http://localhost:5173**. The Vite dev server mounts the same `api/`
+handlers Vercel uses in production, so `/api/tmdb` works locally with no extra process.
 
-### 4. Environment Variables
+### Environment
 
-```env
-# .env
-TMDB_API_KEY=your_tmdb_api_key
-TMDB_BASE_URL=https://api.themoviedb.org/3
-
-FLASK_ENV=development
-FLASK_PORT=5000
-
-VITE_API_BASE_URL=http://localhost:5000
-```
-
----
-
-## 🤖 How It Works
-
-**1 — User Input**
-
-The user types a free-form sentence describing their current mood. No genre dropdowns, no star ratings.
-
-```
-"I'm exhausted and just want something light and easy."
-"Feeling pumped after the gym — want something intense."
-"Had a rough week. Could use a good laugh."
-```
-
-**2 — NLP Preprocessing**
-
-```python
-text = "I'm exhausted and just want something easy to watch."
-
-# Lowercase → strip punctuation → tokenize (NLTK)
-# → remove stop words → lemmatize (WordNetLemmatizer)
-
-# Cleaned tokens: ['exhaust', 'want', 'something', 'easy', 'watch']
-```
-
-**3 — Sentiment Classification**
-
-Two models process the cleaned input independently:
-
-- **Logistic Regression** — TF-IDF vectorized input. Fast and interpretable. Solid baseline trained on IMDb / SST-2 data.
-- **LSTM** — Embedding layer + stacked LSTM cells. Captures word order and handles negations better (e.g., *"not happy"* → negative).
-
-Both output a polarity label (`positive`, `negative`, `neutral`) and a fine-grained emotion (`happy`, `sad`, `angry`, `calm`, `excited`, `anxious`).
-
-**4 — TMDB Query**
-
-The emotion label maps to TMDB genre IDs, and a filtered API call retrieves the top-matching movies sorted by popularity and rating threshold.
-
-```python
-GET /discover/movie?with_genres=18,10749&sort_by=popularity.desc&vote_average.gte=6.5
-```
-
-**5 — Output**
-
-Results render as movie cards in the React UI — poster, title, release year, TMDB rating, and overview.
-
----
-
-## 📊 Model Performance
-
-Both models were evaluated on the IMDb / SST-2 sentiment benchmark dataset.
-
-### Logistic Regression
-
-| Metric | Score |
-|---|---|
-| Accuracy | 87.4% |
-| Precision | 86.9% |
-| Recall | 87.1% |
-| F1 Score | 87.0% |
-
-### LSTM
-
-| Metric | Score |
-|---|---|
-| Accuracy | 91.2% |
-| Precision | 90.8% |
-| Recall | 91.0% |
-| F1 Score | 90.9% |
-| Validation Loss | 0.23 |
-
-### Confusion Matrix — LSTM (Binary Sentiment)
-
-<div align="center">
-
-| | Predicted Positive | Predicted Negative |
+| Variable | Required | Purpose |
 |---|---|---|
-| **Actual Positive** | 892 | 78 |
-| **Actual Negative** | 91 | 939 |
+| `TMDB_TOKEN` | **Yes** | TMDB v4 Read Access Token (not the v3 API key) |
+| `HUGGINGFACE_API_TOKEN` | No | Enables the hosted emotion model. Without it, the lexicon engine handles everything |
+| `HUGGINGFACE_EMOTION_MODEL` | No | Override the default emotion model |
 
-</div>
+None are `VITE_`-prefixed, by design — see [Security](#security).
 
-The LSTM outperforms Logistic Regression by ~4% accuracy. The main gains come from handling negation and sequential context — cases where bag-of-words approaches typically struggle.
+### Scripts
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server with the API routes mounted |
+| `npm run build` | `tsc -b && vite build` — a type error fails the build |
+| `npm run typecheck` | TypeScript across `src/` and `api/` |
+| `npm run lint` | ESLint |
+| `npm test` | Vitest, single run |
+| `npm run test:watch` | Vitest in watch mode |
+| `npm run preview` | Serve the production build |
 
 ---
 
-## 🔮 Planned Improvements
+## Testing
 
-- [ ] **Transformer Models** — Upgrade from LSTM to BERT / RoBERTa for richer contextual understanding
-- [ ] **User Accounts** — Persist mood history and personalized watchlists
-- [ ] **Voice Input** — Accept spoken mood descriptions via the Web Speech API
-- [ ] **Multilingual NLP** — Extend the pipeline beyond English
-- [ ] **Collaborative Filtering** — Hybrid recommender combining sentiment with user viewing history
-- [ ] **Streaming Results** — Progressively render cards as the model runs
+```bash
+npm test
+```
+
+174 tests across 10 files, covering the logic worth protecting:
+
+| Suite | Covers |
+|---|---|
+| `sentimentService.test.ts` | Negation, vocabulary, confidence bounds, determinism, phrase handling |
+| `moodLexicon.test.ts` | Vocabulary invariants — no term may belong to two moods |
+| `moodService.test.ts` | Model-preferred classification and every fallback path |
+| `tfidf.test.ts` | Tokenisation, IDF weighting, unit vectors, cosine symmetry and bounds |
+| `recommendationService.test.ts` | Self-exclusion, deduplication, ranking, missing metadata, partial upstream failure |
+| `tmdbService.test.ts` | Success, empty results, and network / timeout / 404 / 429 / 5xx failures |
+| `api/_tmdb.test.ts` | Path allowlist, SSRF and traversal rejection, parameter filtering, credential never leaked |
+| `MoviePoster.test.tsx` | Fallback rendering, load-failure recovery, layout stability |
+| `Header.test.tsx` | Mobile menu open/close, Escape, focus return, ARIA wiring |
 
 ---
 
-## 🤝 Contributing
+## Continuous integration
 
-Issues and pull requests are welcome. For significant changes, open an issue first to discuss what you'd like to change.
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to `main` and
+every pull request:
+
+```
+npm ci  →  npm run lint  →  npm run typecheck  →  npm test  →  npm run build
+```
+
+The badge at the top reflects the real result of that workflow.
+
+---
+
+## Deployment
+
+Deploys to Vercel as a Vite SPA plus serverless functions.
+
+1. **Set `TMDB_TOKEN`** in the Vercel project's environment variables. Without it
+   `/api/tmdb` returns 503 and no movies load. Optionally set `HUGGINGFACE_API_TOKEN`
+   to enable the hosted emotion model.
+2. Deploy. `vercel.json` rewrites every non-`/api` route to `index.html`; Vercel does
+   **not** do this automatically for Vite, so without it deep links 404.
+3. Verify after deploying:
+
+   | Check | Expected |
+   |---|---|
+   | `/` | App loads |
+   | `/recommendations`, `/about` | Load on direct navigation, not 404 |
+   | `/movie/550` | Fight Club, including "More like this" |
+   | `/movie/550` after a refresh | Still loads |
+   | `/not-a-real-route` | In-app 404 page |
+   | `/api/tmdb?path=/account` | `{"error":{"code":"path_not_allowed"}}` |
+
+Test files are underscore-prefixed inside `api/` and excluded by `.vercelignore`, so
+they are never deployed as functions.
+
+---
+
+## Roadmap
+
+- **Train a MoodFlix-specific emotion classifier** on a labelled dataset (GoEmotions or
+  similar), publish real evaluation metrics, and replace the hosted general-purpose model
+- **Hybrid ranking** — blend content similarity with mood fit rather than keeping them separate
+- **Watchlists** — persistence, which currently does not exist anywhere in the app
+- **Voice input** via the Web Speech API
+- **Multilingual moods** — both engines are English-only today
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome. CI must pass, which means lint, typecheck, tests and
+build all green.
 
 ```bash
 git checkout -b feature/your-feature
+npm run lint && npm run typecheck && npm test
 git commit -m "feat: describe your change"
-git push origin feature/your-feature
-# Open a Pull Request
 ```
 
 ---
 
+## Acknowledgements
 
+- Movie data from [The Movie Database (TMDB)](https://www.themoviedb.org/). This product uses
+  the TMDB API but is not endorsed or certified by TMDB.
+- Emotion model by [j-hartmann](https://huggingface.co/j-hartmann/emotion-english-distilroberta-base).
 
-## 👤 Author
+## License
 
-<div align="center">
-
-**Tanmay Tyagi**
-
-
-
----
-
-<div align="center">
-
-*If this project was useful, a ⭐ on GitHub is appreciated.*
-
-![Footer](https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=80&section=footer)
-
-</div>
+[MIT](LICENSE) © Tanmay Tyagi

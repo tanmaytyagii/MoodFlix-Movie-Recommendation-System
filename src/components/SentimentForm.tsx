@@ -1,18 +1,39 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Smile, 
-  Frown, 
-  Zap, 
-  Coffee, 
-  Meh, 
-  AlertTriangle, 
-  Ghost 
+import {
+  Clock,
+  CloudRain,
+  Coffee,
+  Compass,
+  Eye,
+  Flame,
+  Frown,
+  Ghost,
+  Heart,
+  Lightbulb,
+  Smile,
+  Zap,
 } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/useAppContext';
 import { SentimentLabel } from '../types';
-import { SENTIMENT_DESCRIPTIONS, SENTIMENT_EMOJIS } from '../utils/constants';
+import { SELECTABLE_SENTIMENTS, SENTIMENT_COLORS, SENTIMENT_EMOJIS } from '../utils/constants';
+
+const MOOD_ICONS: Record<SentimentLabel, React.ReactNode> = {
+  happy: <Smile size={22} aria-hidden="true" />,
+  sad: <Frown size={22} aria-hidden="true" />,
+  excited: <Zap size={22} aria-hidden="true" />,
+  relaxed: <Coffee size={22} aria-hidden="true" />,
+  romantic: <Heart size={22} aria-hidden="true" />,
+  adventurous: <Compass size={22} aria-hidden="true" />,
+  mysterious: <Eye size={22} aria-hidden="true" />,
+  fearful: <Ghost size={22} aria-hidden="true" />,
+  angry: <Flame size={22} aria-hidden="true" />,
+  nostalgic: <Clock size={22} aria-hidden="true" />,
+  thoughtful: <Lightbulb size={22} aria-hidden="true" />,
+  melancholic: <CloudRain size={22} aria-hidden="true" />,
+  neutral: null,
+};
 
 const SentimentForm: React.FC = () => {
   const [sentimentText, setSentimentText] = useState('');
@@ -20,14 +41,11 @@ const SentimentForm: React.FC = () => {
   const { analyzeSentimentAndGetMovies, setUserSentimentManually, isLoading } = useAppContext();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (textAnalysisMode) {
-      if (!sentimentText.trim()) return;
-      await analyzeSentimentAndGetMovies(sentimentText);
-    }
-    
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!sentimentText.trim()) return;
+
+    await analyzeSentimentAndGetMovies(sentimentText);
     navigate('/recommendations');
   };
 
@@ -36,106 +54,104 @@ const SentimentForm: React.FC = () => {
     navigate('/recommendations');
   };
 
-  const sentimentOptions: { label: SentimentLabel; icon: React.ReactNode; color: string }[] = [
-    { label: 'happy', icon: <Smile size={24} />, color: 'bg-green-500' },
-    { label: 'sad', icon: <Frown size={24} />, color: 'bg-blue-500' },
-    { label: 'excited', icon: <Zap size={24} />, color: 'bg-yellow-500' },
-    { label: 'relaxed', icon: <Coffee size={24} />, color: 'bg-teal-500' },
-    { label: 'neutral', icon: <Meh size={24} />, color: 'bg-gray-500' },
-    { label: 'angry', icon: <AlertTriangle size={24} />, color: 'bg-red-500' },
-    { label: 'fearful', icon: <Ghost size={24} />, color: 'bg-purple-500' }
-  ];
+  const tabClass = (active: boolean) =>
+    `px-4 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 ${
+      active ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-white hover:bg-gray-600'
+    }`;
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
-      <div className="p-8">
-        <h2 className="text-3xl font-bold text-center mb-6 text-white">How are you feeling today?</h2>
-        
-        <div className="flex justify-center mb-8">
-          <div className="flex space-x-2">
+    <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl bg-gray-800 shadow-2xl">
+      <div className="p-6 sm:p-8">
+        <h2 className="mb-6 text-center text-3xl font-bold text-white">How are you feeling today?</h2>
+
+        <div className="mb-8 flex justify-center">
+          {/* Radio-style tabs: exactly one mode is active at a time. */}
+          <div className="flex" role="group" aria-label="Choose how to set your mood">
             <button
+              type="button"
               onClick={() => setTextAnalysisMode(true)}
-              className={`px-4 py-2 rounded-l-md transition-colors ${
-                textAnalysisMode ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-white hover:bg-gray-600'
-              }`}
+              aria-pressed={textAnalysisMode}
+              className={`rounded-l-md ${tabClass(textAnalysisMode)}`}
             >
-              Describe Your Mood
+              Describe your mood
             </button>
             <button
+              type="button"
               onClick={() => setTextAnalysisMode(false)}
-              className={`px-4 py-2 rounded-r-md transition-colors ${
-                !textAnalysisMode ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-white hover:bg-gray-600'
-              }`}
+              aria-pressed={!textAnalysisMode}
+              className={`rounded-r-md ${tabClass(!textAnalysisMode)}`}
             >
-              Select Emotion
+              Pick a mood
             </button>
           </div>
         </div>
-        
+
         {textAnalysisMode ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="sentimentText" className="block text-sm font-medium text-gray-300 mb-2">
-                Tell us how you're feeling or what kind of movie you're in the mood for:
+              <label htmlFor="sentimentText" className="mb-2 block text-sm font-medium text-gray-300">
+                Tell us how you&rsquo;re feeling, or what you&rsquo;re in the mood to watch:
               </label>
               <textarea
                 id="sentimentText"
                 rows={4}
                 value={sentimentText}
-                onChange={(e) => setSentimentText(e.target.value)}
-                placeholder="E.g., I'm feeling happy and excited today, looking for something uplifting..."
-                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                onChange={(event) => setSentimentText(event.target.value)}
+                placeholder="E.g. Had a rough week and could use a good laugh…"
+                className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 required
               />
             </div>
-            
+
             <div className="flex justify-center">
               <button
                 type="submit"
                 disabled={isLoading || !sentimentText.trim()}
-                className={`px-8 py-3 rounded-lg font-semibold transition-colors ${
+                className={`rounded-lg px-8 py-3 font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 ${
                   isLoading || !sentimentText.trim()
-                    ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                    ? 'cursor-not-allowed bg-gray-600 text-gray-300'
                     : 'bg-yellow-500 text-gray-900 hover:bg-yellow-400'
                 }`}
               >
-                {isLoading ? 'Analyzing...' : 'Get Recommendations'}
+                {isLoading ? 'Reading your mood…' : 'Get recommendations'}
               </button>
             </div>
           </form>
         ) : (
           <div>
-            <p className="text-gray-300 mb-6 text-center">
-              Select an emotion below to get movie recommendations:
-            </p>
-            
-            <motion.div 
-              className="grid grid-cols-2 sm:grid-cols-4 gap-4"
+            <p className="mb-6 text-center text-gray-300">Pick a mood to get recommendations:</p>
+
+            <motion.div
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ staggerChildren: 0.1 }}
+              transition={{ staggerChildren: 0.05 }}
             >
-              {sentimentOptions.map((option) => (
+              {SELECTABLE_SENTIMENTS.map((mood) => (
                 <motion.button
-                  key={option.label}
-                  onClick={() => handleSentimentSelection(option.label)}
+                  key={mood}
+                  type="button"
+                  onClick={() => handleSentimentSelection(mood)}
                   disabled={isLoading}
-                  className={`${option.color} p-4 rounded-lg flex flex-col items-center justify-center hover:shadow-lg transition-all hover:-translate-y-1 ${
-                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  className={`${SENTIMENT_COLORS[mood]} flex flex-col items-center justify-center rounded-lg p-4 text-white transition-all hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 ${
+                    isLoading ? 'cursor-not-allowed opacity-50' : ''
                   }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={isLoading ? undefined : { scale: 1.05 }}
+                  whileTap={isLoading ? undefined : { scale: 0.95 }}
                 >
-                  <span className="mb-2">{option.icon}</span>
-                  <span className="font-medium capitalize">{option.label}</span>
-                  <span className="text-2xl mt-1">{SENTIMENT_EMOJIS[option.label]}</span>
+                  <span className="mb-1">{MOOD_ICONS[mood]}</span>
+                  <span className="text-sm font-medium capitalize">{mood}</span>
+                  <span aria-hidden="true" className="mt-1 text-xl">
+                    {SENTIMENT_EMOJIS[mood]}
+                  </span>
                 </motion.button>
               ))}
             </motion.div>
-            
+
             {isLoading && (
-              <div className="flex justify-center mt-6">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-500"></div>
+              <div className="mt-6 flex justify-center" role="status">
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-yellow-500" />
+                <span className="sr-only">Loading recommendations</span>
               </div>
             )}
           </div>

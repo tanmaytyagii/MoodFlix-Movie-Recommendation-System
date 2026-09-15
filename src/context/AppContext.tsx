@@ -1,89 +1,87 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import { Movie, Sentiment, SentimentLabel } from '../types';
-import { analyzeSentiment } from '../services/sentimentService';
+import { classifyMood } from '../services/moodService';
+import { manualSentiment } from '../services/sentimentService';
 import { getMovieRecommendationsBySentiment } from '../services/tmdbService';
-
-interface AppContextProps {
-  userSentiment: Sentiment | null;
-  recommendedMovies: Movie[];
-  isLoading: boolean;
-  analyzeSentimentAndGetMovies: (text: string) => Promise<void>;
-  setUserSentimentManually: (sentiment: SentimentLabel) => Promise<void>;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-}
-
-const AppContext = createContext<AppContextProps | undefined>(undefined);
+import { ApiError, toApiError } from '../services/apiClient';
+import { AppContext, AppContextValue } from './useAppContext';
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [userSentiment, setUserSentiment] = useState<Sentiment | null>(null);
   const [recommendedMovies, setRecommendedMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<ApiError | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const analyzeSentimentAndGetMovies = async (text: string) => {
+  /** The last request, replayed by `retry()` after a failure. */
+  const lastRequest = useRef<(() => Promise<void>) | null>(null);
+
+  const loadFor = useCallback(async (sentiment: Sentiment) => {
+    setIsLoading(true);
+    setError(null);
+    setUserSentiment(sentiment);
+
     try {
-      setIsLoading(true);
-      
-      // Analyze the sentiment
-      const sentiment = analyzeSentiment(text);
-      setUserSentiment(sentiment);
-      
-      // Get movie recommendations based on the sentiment
       const movies = await getMovieRecommendationsBySentiment(sentiment.label);
       setRecommendedMovies(movies);
-    } catch (error) {
-      console.error('Error analyzing sentiment and getting movies:', error);
+    } catch (caught) {
+      // Keep the detected mood on screen — only the movie fetch failed, and
+      // clearing the results would hide that distinction from the user.
+      setError(toApiError(caught));
+      setRecommendedMovies([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const setUserSentimentManually = async (sentimentLabel: SentimentLabel) => {
-    try {
-      setIsLoading(true);
-      
-      // Create a sentiment object with the selected label
-      const sentiment: Sentiment = {
-        label: sentimentLabel,
-        score: sentimentLabel === 'neutral' ? 0 : 
-               ['happy', 'excited', 'relaxed'].includes(sentimentLabel) ? 0.8 : -0.8,
-        confidence: 1.0
+  const analyzeSentimentAndGetMovies = useCallback(
+    async (text: string) => {
+      const run = async () => {
+        const sentiment = await classifyMood(text);
+        await loadFor(sentiment);
       };
-      
-      setUserSentiment(sentiment);
-      
-      // Get movie recommendations based on the sentiment
-      const movies = await getMovieRecommendationsBySentiment(sentimentLabel);
-      setRecommendedMovies(movies);
-    } catch (error) {
-      console.error('Error setting sentiment manually and getting movies:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <AppContext.Provider
-      value={{
-        userSentiment,
-        recommendedMovies,
-        isLoading,
-        analyzeSentimentAndGetMovies,
-        setUserSentimentManually,
-        searchQuery,
-        setSearchQuery
-      }}
-    >
-      {children}
-    </AppContext.Provider>
+      lastRequest.current = run;
+      await run();
+    },
+    [loadFor],
   );
-};
 
-export const useAppContext = () => {
-  const context = useContext(AppContext);
-  if (context === undefined) {
-    throw new Error('useAppContext must be used within an AppProvider');
-  }
-  return context;
+  const setUserSentimentManually = useCallback(
+    async (label: SentimentLabel) => {
+      const run = () => loadFor(manualSentiment(label));
+      lastRequest.current = run;
+      await run();
+    },
+    [loadFor],
+  );
+
+  const retry = useCallback(async () => {
+    await lastRequest.current?.();
+  }, []);
+
+  const value = useMemo<AppContextValue>(
+    () => ({
+      userSentiment,
+      recommendedMovies,
+      isLoading,
+      error,
+      analyzeSentimentAndGetMovies,
+      setUserSentimentManually,
+      retry,
+      searchQuery,
+      setSearchQuery,
+    }),
+    [
+      userSentiment,
+      recommendedMovies,
+      isLoading,
+      error,
+      analyzeSentimentAndGetMovies,
+      setUserSentimentManually,
+      retry,
+      searchQuery,
+    ],
+  );
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

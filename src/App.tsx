@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import Header from './components/Header';
@@ -7,6 +6,7 @@ import Home from './pages/Home';
 import Recommendations from './pages/Recommendations';
 import About from './pages/About';
 import MovieDetails from './pages/MovieDetails';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -20,6 +20,7 @@ function App() {
               <Route path="/recommendations" element={<Recommendations />} />
               <Route path="/about" element={<About />} />
               <Route path="/movie/:id" element={<MovieDetails />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />
@@ -29,4 +30,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

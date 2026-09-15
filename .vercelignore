@@ -1,0 +1,11 @@
+# Files that must never reach the deployment.
+#
+# Vercel turns every non-underscore file in `api/` into a Serverless Function.
+# Test files have no default export and import vitest, so they would fail the
+# function build. They are underscore-prefixed as well — this is belt and braces.
+**/*.test.ts
+**/*.test.tsx
+src/test
+
+# Research artefacts: not used at runtime, and the dataset is 2.6 MB.
+notebooks
