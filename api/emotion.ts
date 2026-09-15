@@ -1,4 +1,4 @@
-import { createHandler, jsonError, ProxyResult } from './_shared';
+import { createHandler, jsonError, ProxyResult } from './_shared.js';
 
 /**
  * Hosted emotion-classification proxy.

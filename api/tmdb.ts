@@ -1,4 +1,10 @@
-import { createHandler, jsonError, ProxyResult } from './_shared';
+// The `.js` extension is required, not optional. package.json sets
+// "type": "module", so Vercel's Node runtime loads these compiled functions as
+// strict ESM, where relative specifiers must carry an explicit extension.
+// TypeScript resolves `./_shared.js` back to `_shared.ts`. Omitting it compiles
+// and type-checks cleanly, then fails at module load in production with
+// ERR_MODULE_NOT_FOUND -> FUNCTION_INVOCATION_FAILED.
+import { createHandler, jsonError, ProxyResult } from './_shared.js';
 
 /**
  * Server-side TMDB proxy.
@@ -19,6 +25,7 @@ const UPSTREAM_TIMEOUT_MS = 8000;
  */
 const ALLOWED_PATHS: RegExp[] = [
   /^\/trending\/movie\/(day|week)$/,
+  /^\/movie\/(popular|top_rated|now_playing|upcoming)$/,
   /^\/search\/movie$/,
   /^\/discover\/movie$/,
   /^\/movie\/\d+$/,

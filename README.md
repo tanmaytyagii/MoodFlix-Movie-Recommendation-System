@@ -204,7 +204,7 @@ Browser  →  /api/tmdb?path=/discover/movie  →  TMDB
   request details (including the `Authorization` header) never reach the client.
 - Mood text is sent by **POST**, so it does not land in server access logs or CDN cache keys.
 
-There are 30 tests in `api/_tmdb.test.ts` covering exactly these properties.
+There are 39 tests in `api/_tmdb.test.ts` covering exactly these properties.
 
 ### ⚠️ Historical credential exposure
 
@@ -241,6 +241,7 @@ MoodFlix-Movie-Recommendation-System/
 ├── api/                        # Vercel serverless functions
 │   ├── _shared.ts              #   transport adapter shared by both handlers
 │   ├── _tmdb.test.ts           #   underscore = not deployed as a route
+│   ├── _runtime.test.ts        #   guards the Vercel deployment contract
 │   ├── tmdb.ts                 #   TMDB proxy — holds the credential, allowlists paths
 │   └── emotion.ts              #   Hugging Face emotion-model proxy
 ├── src/
@@ -313,7 +314,7 @@ None are `VITE_`-prefixed, by design — see [Security](#security).
 npm test
 ```
 
-174 tests across 10 files, covering the logic worth protecting:
+194 tests across 11 files, covering the logic worth protecting:
 
 | Suite | Covers |
 |---|---|
@@ -324,6 +325,7 @@ npm test
 | `recommendationService.test.ts` | Self-exclusion, deduplication, ranking, missing metadata, partial upstream failure |
 | `tmdbService.test.ts` | Success, empty results, and network / timeout / 404 / 429 / 5xx failures |
 | `api/_tmdb.test.ts` | Path allowlist, SSRF and traversal rejection, parameter filtering, credential never leaked |
+| `api/_runtime.test.ts` | Vercel deployment contract — ESM import extensions, handler signatures, test files never routed |
 | `MoviePoster.test.tsx` | Fallback rendering, load-failure recovery, layout stability |
 | `Header.test.tsx` | Mobile menu open/close, Escape, focus return, ARIA wiring |
 
@@ -364,6 +366,16 @@ Deploys to Vercel as a Vite SPA plus serverless functions.
 
 Test files are underscore-prefixed inside `api/` and excluded by `.vercelignore`, so
 they are never deployed as functions.
+
+### Editing `api/` — one constraint worth knowing
+
+`package.json` sets `"type": "module"`, so Vercel loads the compiled functions as strict
+ESM. **Relative imports inside `api/` must carry an explicit `.js` extension**
+(`./_shared.js`, not `./_shared`), even though the file on disk is `.ts` — TypeScript
+resolves it back. An extensionless import type-checks, lints, builds and works in `npm run
+dev`, then throws `ERR_MODULE_NOT_FOUND` at module load in production and every request
+returns `500 FUNCTION_INVOCATION_FAILED`. `api/_runtime.test.ts` fails the build if this
+rule is broken.
 
 ---
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { handleTmdbRequest } from './tmdb';
+import { handleTmdbRequest } from './tmdb.js';
 
 /**
  * Underscore-prefixed on purpose: Vercel exposes every non-underscore file in
@@ -45,12 +45,18 @@ describe('configuration', () => {
 describe('path validation', () => {
   it.each([
     '/trending/movie/day',
+    '/trending/movie/week',
+    '/movie/popular',
+    '/movie/top_rated',
+    '/movie/now_playing',
+    '/movie/upcoming',
     '/search/movie',
     '/discover/movie',
     '/movie/550',
     '/movie/550/similar',
     '/movie/550/recommendations',
     '/movie/550/keywords',
+    '/genre/movie/list',
   ])('allows %s', async (path) => {
     const result = await handleTmdbRequest(request(`?path=${encodeURIComponent(path)}`));
     expect(result.status).toBe(200);
@@ -69,6 +75,9 @@ describe('path validation', () => {
     ['a non-numeric movie id', '/movie/abc'],
     ['an unlisted subresource', '/movie/550/credits'],
     ['a trailing-segment escape', '/discover/movie/extra'],
+    ['an unlisted movie list', '/movie/latest'],
+    ['a sub-path under a list endpoint', '/movie/popular/extra'],
+    ['a cased variant', '/Movie/Popular'],
   ])('rejects %s', async (_name, path) => {
     const result = await handleTmdbRequest(request(`?path=${encodeURIComponent(path)}`));
     expect(result.status).toBe(400);
